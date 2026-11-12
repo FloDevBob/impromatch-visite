@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Visite guidée d'ImproMatch</title>
+<title>Visite guidée d'Impro Match</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&display=swap">
 <style>
@@ -38,13 +38,17 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .vg-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(270px, 330px) minmax(0, 1fr); gap: 20px; padding-bottom: 14px; }
 
 /* Coach */
-.vg-coach { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: 8px; overflow-y: auto; }
+.vg-coach { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: 8px; min-height: 0; }
+#vg-copy { position: relative; flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; scrollbar-width: thin; }
 .vg-eye { margin: 0; font: 600 15px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
 .vg-coach h1 { margin: 0; font: 800 36px/1 var(--display); text-transform: uppercase; text-wrap: balance; }
 .vg-coach p { margin: 0; max-width: 34em; }
 .vg-keys { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--soft); font-size: 13px; }
 .vg-ok { display: flex; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; animation: vg-up .45s cubic-bezier(.2,.8,.2,1) both; }
 .vg-ok::before { content: "✓"; color: var(--ok); font-weight: 700; }
+.vg-logo svg { width: 96px; height: 96px; display: block; filter: drop-shadow(0 6px 16px rgba(0,0,0,.4)); }
+.vg-ok > *, .vg-x > * { min-width: 0; }
+.vg-x ul, .vg-ok ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; } .vg-x li::marker { color: var(--accent); } .vg-ok li::marker { color: var(--ok); }
 .vg-anim > * { animation: vg-up .45s cubic-bezier(.2,.8,.2,1) both; }
 .vg-anim > :nth-child(2) { animation-delay: .04s; } .vg-anim > :nth-child(3) { animation-delay: .08s; } .vg-anim > :nth-child(4) { animation-delay: .12s; }
 @keyframes vg-up { from { opacity: 0; transform: translateY(10px); } }
@@ -52,7 +56,7 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .vg-chips button, .vg-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 14px; }
 .vg-short { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin: 0; }
 .vg-short dt { justify-self: start; } .vg-short dd { margin: 0; color: var(--soft); }
-.vg-nav { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
+.vg-nav { display: flex; gap: 8px; flex: none; padding: 8px 0 2px; flex-wrap: wrap; position: relative; z-index: 2; }
 .vg-nav button { white-space: nowrap; border-radius: 10px; border: 1px solid var(--line); background: transparent; padding: 9px 14px; font-weight: 600; }
 .vg-nav .go { background: var(--accent); color: var(--ink); border-color: var(--accent); flex: 1; }
 .vg-nav .go:disabled { background: transparent; color: var(--soft); border-color: var(--line); opacity: .5; cursor: default; }
@@ -226,7 +230,7 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .a4 { width: 150px; height: 212px; border: 2px dashed #6F7079; border-radius: 6px; display: grid; place-items: center; color: var(--dim); font-weight: 600; letter-spacing: .1em; }
 /* Schéma animé « on prépare, puis on projette » */
 #vg-schema { position: absolute; inset: 0; z-index: 25; } #vg-schema:empty { display: none; }
-.sch { position: absolute; inset: 0; background: #0B0D11; display: flex; flex-direction: column; padding: 44px 60px 40px; gap: 26px; animation: vg-fade .35s both; font-family: var(--ui); }
+.sch { position: absolute; inset: 0; background: #0B0D11; display: flex; flex-direction: column; padding: 40px 60px 34px; gap: 22px; animation: vg-fade .35s both; font-family: var(--ui); }
 .sch h2 { margin: 0; font: 800 54px/1 var(--display); text-transform: uppercase; } .sch h2 span { color: var(--accent); }
 .sch .row2 { display: flex; align-items: center; gap: 0; }
 .sch .col { flex: none; width: 440px; display: flex; flex-direction: column; gap: 12px; }
@@ -242,9 +246,21 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .sch .cap { font: 500 34px/1.25 var(--ui); min-height: 86px; color: var(--fg); text-wrap: balance; } .sch .cap b { color: var(--accent); }
 .sch .strip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 20px; }
 .sch .strip span { padding: 6px 16px; border-radius: 99px; border: 1px solid var(--line); color: var(--soft); } .sch .strip span.p { border: 1px dashed #FFD60A; color: #FFD60A; } .sch .strip span.a { border-color: var(--live); color: var(--fg); background: rgba(255,90,95,.2); } .sch .strip span.d { opacity: .55; }
-.sch .foot { display: flex; gap: 14px; align-items: center; margin-top: auto; font-size: 20px; color: var(--soft); }
+.sch .foot { display: flex; gap: 14px; align-items: center; font-size: 20px; color: var(--soft); }
 .sch .foot i { display: inline-block; padding: 7px 16px; border: 1px solid var(--line); border-radius: 12px; font-style: normal; background: var(--panel); }
-.sch .dots { margin-left: auto; display: flex; gap: 10px; } .sch .dots button { width: 18px; height: 18px; border-radius: 50%; border: 0; padding: 0; background: var(--line); } .sch .dots button.on { background: var(--accent); }
+.sch .play { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; font: 600 22px var(--ui); padding: 8px 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+.sch .play:hover { background: #232832; }
+.sch .tl { display: grid; grid-template-columns: repeat(11, 1fr); gap: 8px; margin-top: auto; }
+.sch .tl button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 4px 12px; border-radius: 14px; border: 1px solid var(--line); background: transparent; color: var(--soft); overflow: hidden; }
+.sch .tl button:hover { background: var(--panel); }
+.sch .tl .nb { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font: 700 21px var(--ui); }
+.sch .tl .lb { font: 600 18px/1.1 var(--ui); text-align: center; min-height: 2.2em; }
+.sch .tl button.past .nb { background: var(--ok); border-color: var(--ok); color: var(--ink); } .sch .tl button.past { color: var(--fg); }
+.sch .tl button.on { border-color: var(--accent); background: var(--panel); color: var(--fg); }
+.sch .tl button.on .nb { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.sch .tl button.on::after { content: ""; position: absolute; left: 0; bottom: 0; height: 5px; background: var(--accent); width: 100%; transform-origin: 0 50%; transform: scaleX(0); }
+.sch.playing .tl button.on::after { animation: sch-prog 3.6s linear both; }
+@keyframes sch-prog { to { transform: scaleX(1); } }
 .sch .tag { position: absolute; top: 12px; right: 12px; font: 700 20px var(--ui); padding: 3px 12px; border-radius: 99px; background: #FFD60A; color: #000; }
 
 
@@ -316,7 +332,7 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 
 @media (max-width: 760px) {
   .vg-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
-  .vg-view { order: -1; } .vg-coach { max-height: 46vh; padding-top: 0; gap: 9px; } .vg-coach h1 { font-size: 30px; }
+  .vg-view { order: -1; } .vg-coach { max-height: 46vh; padding-top: 0; gap: 6px; } .vg-coach h1 { font-size: 30px; }
   .vg-prog span { display: none; } .vg-prog { gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -327,7 +343,7 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 <nav class="vg-prog" id="vg-prog" aria-label="Étapes de la visite"></nav>
 <div class="vg-main">
   <aside class="vg-coach" aria-live="polite">
-    <div id="vg-copy" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div id="vg-copy"></div>
     <div class="vg-nav">
       <button id="vg-back" type="button" class="back">← Précédent</button>
       <button id="vg-next" type="button" class="go">Suivant →</button>
@@ -402,7 +418,7 @@ function init() {
     sel: 'pub', prep: { k: 'welcome' }, air: null, black: true, nb: 0, banner: false,
     score: { a: 0, b: 0 }, fouls: { a: 0, b: 0 }, past: [], pending: [], inPlay: false,
     card: null, result: null, remain: 2700, run: false, alert: false, improRun: false, skip: false,
-    pl: {}, tab: 'match', schema: false, sk: 0, gold: false,
+    pl: {}, tab: 'match', schema: false, sk: 0, play: true, gold: false,
   };
 }
 let S = init(), cur = 0, done = false, timers = [], quiet = false;
@@ -505,30 +521,47 @@ function setScreen(h, st) {
 // ---------- Schéma animé : on prépare, puis on projette ----------
 const FLOW = ['Carte', 'Fautes', 'Vote', 'Résultat', 'Score'];
 const SCH = [
-  { p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, cap: '<b>1.</b> Le board prépare toujours l’écran suivant. <b>Vous seul</b> le voyez, en jaune pointillé.' },
-  { p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, press: 1, cap: '<b>2.</b> <b>Projeter</b> l’envoie à l’antenne.' },
-  { p: 'Écran de vote', a: 'Carte de l’impro', ai: 0, pi: 2, cap: '<b>3.</b> La salle voit la carte. Le <b>vote</b> se prépare déjà, sans rien faire.' },
-  { p: 'Écran des fautes', a: 'Carte de l’impro', ai: 0, pi: 1, tag: 'faute sifflée', cap: 'L’arbitre siffle une faute ? Vous la saisissez : l’<b>écran des fautes</b> prend la place du vote.' },
-  { p: 'Écran des fautes', a: 'Carte de l’impro', ai: 0, pi: 1, press: 1, cap: 'Un clic sur <b>Projeter</b> et la salle voit la faute…' },
-  { p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, cap: '…puis le <b>vote</b> se prépare de nouveau.' },
-  { p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, press: 1, cap: 'Fin de l’impro : <b>Projeter</b> envoie le vote.' },
-  { p: 'Résultat', a: 'À vos cartons !', ai: 2, pi: 3, cap: 'La salle vote. Pendant ce temps, le <b>résultat</b> attend l’arbitre.' },
-  { p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, click: 1, cap: '<b>Seule exception :</b> un clic sur l’équipe gagnante compte le point <b>et</b> le projette tout de suite.' },
-  { p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, press: 1, cap: '<b>Projeter</b> montre le tableau, où les volets tournent.' },
-  { p: 'Carte de l’impro suivante', a: 'Tableau des scores', ai: 4, pi: 0, cap: 'Et ça recommence avec l’impro suivante.' },
+  { l: 'Carte prête', p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, cap: '<b>1.</b> Le board prépare toujours l’écran suivant. <b>Vous seul</b> le voyez, en jaune pointillé.' },
+  { l: 'Projeter', p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, press: 1, cap: '<b>2.</b> <b>Projeter</b> l’envoie à l’antenne.' },
+  { l: 'Vote prêt', p: 'Écran de vote', a: 'Carte de l’impro', ai: 0, pi: 2, cap: '<b>3.</b> La salle voit la carte. Le <b>vote</b> se prépare déjà, sans rien faire.' },
+  { l: 'Faute', p: 'Écran des fautes', a: 'Carte de l’impro', ai: 0, pi: 1, tag: 'faute sifflée', cap: 'L’arbitre siffle une faute ? Vous la saisissez : l’<b>écran des fautes</b> prend la place du vote.' },
+  { l: 'Projeter', p: 'Écran des fautes', a: 'Carte de l’impro', ai: 0, pi: 1, press: 1, cap: 'Un clic sur <b>Projeter</b> et la salle voit la faute…' },
+  { l: 'Vote prêt', p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, cap: '…puis le <b>vote</b> se prépare de nouveau.' },
+  { l: 'Projeter', p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, press: 1, cap: 'Fin de l’impro : <b>Projeter</b> envoie le vote.' },
+  { l: 'Résultat', p: 'Résultat', a: 'À vos cartons !', ai: 2, pi: 3, cap: 'La salle vote. Pendant ce temps, le <b>résultat</b> attend l’arbitre.' },
+  { l: 'Clic équipe', p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, click: 1, cap: '<b>Seule exception :</b> un clic sur l’équipe gagnante compte le point <b>et</b> le projette tout de suite.' },
+  { l: 'Projeter', p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, press: 1, cap: '<b>Projeter</b> montre le tableau, où les volets tournent.' },
+  { l: 'Suivante', p: 'Carte de l’impro suivante', a: 'Tableau des scores', ai: 4, pi: 0, cap: 'Et ça recommence avec l’impro suivante.' },
 ];
-function schemaHTML() {
-  const b = SCH[S.sk % SCH.length], go = b.press || b.click;
+function schemaBuild() {
   return `<div class="sch"><h2>On prépare, <span>puis on projette</span></h2>
-    <div class="row2"><div class="col prep"><h4>En préparation<small>vous seul voyez</small></h4><div class="scr2"><b>${b.p}</b>${b.tag ? `<span class="tag">${b.tag}</span>` : ''}</div></div>
-      <div class="mid"><div class="go2 ${go ? 'fire' : ''}">${ic('arrow-right', 44, 1.8)}</div><b>Projeter</b><small>${b.click ? 'ou un clic sur le résultat' : '⌘↩'}</small></div>
-      <div class="col air"><h4>À l’antenne<small>la salle voit</small></h4><div class="scr2"><b>${b.a}</b></div></div></div>
-    ${go ? `<div class="ghost">${b.p}</div>` : ''}
-    <div class="strip"><b style="margin-right:6px">Une impro :</b>${FLOW.map((f, i) => `<span class="${i === b.ai ? 'a' : i === b.pi ? 'p' : i < b.ai ? 'd' : ''}">${f}${i === b.ai ? ' · à l’antenne' : i === b.pi ? ' · en préparation' : ''}</span>`).join('')}</div>
-    <div class="cap">${b.cap}</div>
-    <div class="foot"><i>Score et fautes : en direct, sans Projeter</i><i>Noir : coupe l’écran sans rien perdre</i><span class="dots">${SCH.map((_, i) => `<button type="button" data-a="sch" data-v="${i}" aria-label="Moment ${i + 1}" class="${i === S.sk % SCH.length ? 'on' : ''}"></button>`).join('')}</span></div></div>`;
+    <div class="row2"><div class="col prep"><h4>En préparation<small>vous seul voyez</small></h4><div class="scr2" data-f="p"></div></div>
+      <div class="mid"><div class="go2" data-f="go">${ic('arrow-right', 44, 1.8)}</div><b>Projeter</b><small data-f="hint"></small></div>
+      <div class="col air"><h4>À l’antenne<small>la salle voit</small></h4><div class="scr2" data-f="a"></div></div></div>
+    <div class="strip" data-f="strip"></div>
+    <div class="cap" data-f="cap"></div>
+    <div class="tl" aria-label="Les moments d'une impro">${SCH.map((b, i) => `<button type="button" data-a="sch" data-v="${i}" data-i="${i}"><span class="nb">${i + 1}</span><span class="lb">${b.l}</span></button>`).join('')}</div>
+    <div class="foot"><i>Score et fautes : en direct, sans Projeter</i><i>Noir : coupe l’écran sans rien perdre</i><button type="button" class="play" data-a="schplay" data-f="play"></button></div></div>`;
 }
-setInterval(() => { if (S.schema && !quiet) { S.sk = (S.sk + 1) % SCH.length; render(); } }, 3600);
+// Mise à jour ciblée : seuls les morceaux qui changent sont touchés, donc rien ne clignote
+function schemaUpdate() {
+  const root = $('#vg-schema');
+  if (!S.schema) { if (root.firstChild) root.innerHTML = ''; root._i = null; return; }
+  if (!root.firstChild) { root.innerHTML = schemaBuild(); root._i = null; }
+  const i = S.sk % SCH.length, b = SCH[i], go = b.press || b.click, first = root._i == null, moved = root._i !== i; root._i = i;
+  const set = (f, html) => { const e = root.querySelector(`[data-f=${f}]`); if (e._h !== html) { e._h = html; e.innerHTML = html; } };
+  set('p', `<b>${b.p}</b>${b.tag ? `<span class="tag">${b.tag}</span>` : ''}`);
+  set('a', `<b>${b.a}</b>`);
+  set('hint', b.click ? 'ou un clic sur le résultat' : '⌘↩');
+  set('strip', `<b style="margin-right:6px">Une impro :</b>${FLOW.map((f, k) => `<span class="${k === b.ai ? 'a' : k === b.pi ? 'p' : k < b.ai ? 'd' : ''}">${f}${k === b.ai ? ' · à l’antenne' : k === b.pi ? ' · en préparation' : ''}</span>`).join('')}`);
+  set('cap', b.cap);
+  set('play', S.play ? '⏸ Pause' : '▶ Lecture automatique');
+  root.querySelector('.sch').classList.toggle('playing', !!S.play);
+  root.querySelectorAll('.tl button').forEach((e, k) => { e.classList.toggle('on', k === i); e.classList.toggle('past', k < i); });
+  const g = root.querySelector('[data-f=go]'); g.classList.toggle('fire', !!go && moved);
+  if (moved || first) { root.querySelectorAll('.ghost').forEach(e => e.remove()); if (go) { const gh = document.createElement('div'); gh.className = 'ghost'; gh.textContent = b.p; root.querySelector('.sch').appendChild(gh); } }
+}
+setInterval(() => { if (S.schema && S.play && !quiet) { S.sk = (S.sk + 1) % SCH.length; schemaUpdate(); } }, 3600);
 
 // ---------- Rendu du board ----------
 function put(id, html) { const e = $(id); if (e._h !== html) { e.innerHTML = html; e._h = html; } return e; }
@@ -559,7 +592,7 @@ function render() {
       + z('#r-clock', '4 · Chronos et score', 'left:auto;right:10px;top:auto;bottom:-16px', .75);
   }
   put('#vg-zones', zh);
-  put('#vg-schema', S.schema ? schemaHTML() : '');
+  schemaUpdate();
   const bv = $('#vg-bravo'); if (S.bravo && bv.hidden) bv.innerHTML = '<div>' + [...'BRAVO'].map((c, i) => `<span style="animation-delay:${.15 + i * .12}s">${c}</span>`).join('') + '</div>'; bv.hidden = !S.bravo;
   const s = STEPS[cur]; if (s && s.see && !done) see($(s.see));
   requestAnimationFrame(cam);
@@ -742,65 +775,97 @@ setInterval(() => {
 // ---------- Étapes ----------
 const CH = ['Bienvenue', 'Avant la soirée', 'Brancher', "L'ouverture", 'Une impro', 'La période', 'La fin'];
 const P = '[data-a=project]';
+const LOGO = '<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" role="img" aria-label="Logo Impro Match" viewBox="0 0 1024 1024"><defs><clipPath id="vg-logo-m"><path d="M282.0 790.0 Q236 790 236.0 744.0 L236.0 296.0 Q236 250 282.0 250.0 L338.0 250.0 Q384 250 408.6 288.9 L487.4 413.1 Q512 452 536.6 413.1 L615.4 288.9 Q640 250 686.0 250.0 L742.0 250.0 Q788 250 788.0 296.0 L788.0 744.0 Q788 790 742.0 790.0 L696.0 790.0 Q650 790 650.0 744.0 L650.0 546.0 Q650 500 626.1 539.3 L571.9 628.7 Q548 668 515.3 668.0 L508.7 668.0 Q476 668 452.1 628.7 L397.9 539.3 Q374 500 374.0 546.0 L374.0 744.0 Q374 790 328.0 790.0 Z"/></clipPath></defs><rect x="100" y="100" width="824" height="824" rx="185" ry="185" fill="#FFD479"/><g clip-path="url(#vg-logo-m)"><rect x="236.0" y="250" width="69.6" height="540" fill="#F4F5F7"/><rect x="305.0" y="250" width="69.6" height="540" fill="#0E1116"/><rect x="374.0" y="250" width="69.6" height="540" fill="#F4F5F7"/><rect x="443.0" y="250" width="69.6" height="540" fill="#0E1116"/><rect x="512.0" y="250" width="69.6" height="540" fill="#F4F5F7"/><rect x="581.0" y="250" width="69.6" height="540" fill="#0E1116"/><rect x="650.0" y="250" width="69.6" height="540" fill="#F4F5F7"/><rect x="719.0" y="250" width="69.6" height="540" fill="#0E1116"/></g><path d="M282.0 790.0 Q236 790 236.0 744.0 L236.0 296.0 Q236 250 282.0 250.0 L338.0 250.0 Q384 250 408.6 288.9 L487.4 413.1 Q512 452 536.6 413.1 L615.4 288.9 Q640 250 686.0 250.0 L742.0 250.0 Q788 250 788.0 296.0 L788.0 744.0 Q788 790 742.0 790.0 L696.0 790.0 Q650 790 650.0 744.0 L650.0 546.0 Q650 500 626.1 539.3 L571.9 628.7 Q548 668 515.3 668.0 L508.7 668.0 Q476 668 452.1 628.7 L397.9 539.3 Q374 500 374.0 546.0 L374.0 744.0 Q374 790 328.0 790.0 Z" fill="none" stroke="#0E1116" stroke-width="20" stroke-linejoin="round"/></svg>';
 const STEPS = [
-  { ch: 0, t: 'ImproMatch en 10 minutes', x: "ImproMatch pilote l'écran du vidéoprojecteur pendant un match d'impro. Vous allez dérouler une soirée sur une copie du board, <b>de la préparation à la fin du match</b> : rien n'est projeté pour de vrai.", info: 1, next: 'Commencer' },
-  { ch: 0, t: 'Un board pour vous, un écran pour la salle', x: "À gauche, le <b>déroulé</b> de la soirée. Au centre, deux aperçus : <b>En préparation</b>, que vous seul voyez, et <b>À l'antenne</b>, ce que voit le public. En haut, les chronos et le score. Sous les aperçus, les outils de l'impro en cours.", info: 1, en: () => { S.zones = true; }, lv: () => { S.zones = false; } },
-  { ch: 1, t: 'La fiche du match', x: 'Tout commence par la fiche : équipes, couleurs, joueurs, règlement. Ouvrez-la avec le sélecteur du haut.', tg: '[data-a=page][data-v=sheet]', ex: 'page', ok: v => v === 'sheet', demo: 'sheet', keys: '⌘1', foc: '#r-bar', do: () => { S.page = 'sheet'; } },
-  { ch: 1, t: 'Deux couleurs qui se distinguent', x: "Les Lynx sont en rouge et les Hiboux en orange : la fiche prévient qu'on les confondra depuis la salle. Choisissez une autre couleur pour l'<b>Équipe B</b>, les Hiboux.", tg: '#sw-b', ex: 'color', ok: v => v[0] === 'b', demo: 'b:blue', ds: '[data-v="b:blue"]', foc: '#sw-b',
-    do: v => { S.teams.b.c = v.split(':')[1]; toast(close('red', S.teams.b.c) ? 'Encore trop proche du rouge' : "L'alerte a disparu"); }, done: () => !close('red', S.teams.b.c), af: "La couleur suit l'équipe sur tous les écrans : accueil, vote, tableau des scores." },
-  { ch: 1, t: 'Règlement et contenus', x: "Deux autres onglets complètent la fiche. <b>Règlement</b> : périodes, alertes de fin de période, taille des textes, types de fautes, catégories. <b>Contenus</b> : affiche A4, sons, prochaines dates, réseaux sociaux (ils servent à l'écran « Merci »). Parcourez-les, puis continuez.", info: 1, en: () => { S.tab = 'regl'; }, lv: () => { S.tab = 'match'; } },
-  { ch: 1, t: 'Retour au board', x: "La fiche est prête. Passez au <b>Board</b>, par le sélecteur ou par « Aller au board » : c'est lui qui sert pendant la soirée.", tg: '[data-a=page][data-v=board]', ex: 'page', ok: v => v === 'board', demo: 'board', keys: '⌘2', foc: '#r-bar', do: () => { S.page = 'board'; } },
-  { ch: 2, t: 'Brancher le projecteur', x: "Le vidéoprojecteur est branché. Ouvrez le menu <b>Sortie</b> : c'est l'icône du projecteur, en haut à droite.", tg: '[data-a=menu]', ex: 'menu', foc: '.vg-tools', do: () => { S.menu = 'sortie'; } },
-  { ch: 2, t: "Choisir l'écran", x: 'Choisissez le vidéoprojecteur. Sans projecteur sous la main, « Fenêtre de test » permet de répéter.', tg: '#m-sortie', ex: 'output', demo: 'proj', ds: '[data-a=output]', foc: '.vg-tools',
-    do: () => { S.menu = null; S.out = true; }, af: "La sortie est ouverte, et l'écran reste noir tant que vous n'avez rien projeté. En salle, réglez ensuite l'image avec <b>Calage</b> <kbd>⌘K</kbd>, la dernière icône de la barre, et vérifiez la mire de lisibilité depuis le dernier rang." },
-  { ch: 2, t: 'Un chrono pour les arbitres', x: "Le public ne voit jamais le temps. Les arbitres et le MC le suivent sur la <b>Vue chrono</b> (l'icône du chronomètre), à ouvrir sur un <b>2e écran</b> : temps de la période, décompte de l'impro en cours, score et fautes, en grand.", info: 1, foc: '.vg-tools' },
-  { ch: 2, t: 'On prépare, puis on projette', x: "C'est la règle qui fait tout tenir. Pendant que la salle voit un écran, le board <b>prépare déjà le suivant</b> : vous seul le voyez, en jaune pointillé. <b>Projeter</b> l'envoie à l'antenne. Regardez la boucle d'une impro, ou cliquez sur les points pour choisir un moment.", info: 1, en: () => { S.schema = true; S.sk = 0; }, lv: () => { S.schema = false; }, next: 'Compris' },
-  { ch: 2, t: 'Préparer, puis projeter', x: "« Entrée du public » est en préparation : la salle ne voit encore rien. Envoyez-la à l'antenne avec le bouton rond <b>Projeter</b>.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('pub'); S.air = S.prep; prep('how', { k: 'how' }); }, af: "L'écran est à l'antenne, la ligne passe en <b>DIRECT</b> et la séquence suivante se prépare déjà. C'est le geste de toute la soirée." },
-  { ch: 2, t: 'Le Noir', x: "Un imprévu ? <b>Noir</b>, sous Projeter, fond l'écran au noir sans rien perdre. Appuyez une fois pour éteindre, une seconde fois pour rallumer.", tg: '[data-a=black]', ex: 'black', keys: '⌘B', foc: '#r-prev',
-    do: () => { S.black = !S.black; S.nb++; }, done: () => !S.black && S.nb >= 2, af: "L'image revient telle qu'elle était. Le Noir sert aussi entre deux séquences, pour laisser la scène aux joueurs." },
-  { ch: 3, t: "Dérouler l'ouverture", x: "Accueil, présentation, échauffement, entrée de l'arbitre puis des équipes, hymnes : chaque séquence suit le même geste, <b>préparer, puis Projeter</b>. Les hymnes s'activent ou se désactivent dans la fiche. Faisons avancer le déroulé jusqu'au début de la 1re période.", info: 1, foc: '#r-prev',
+  { ch: 0, t: 'Bienvenue', info: 1, logo: 1, next: 'Suivant →', x: [
+      "Ceci est un <b>tutoriel</b> : il vous apprend à utiliser <b>Impro Match</b> en le manipulant.",
+      "Impro Match est une application toute neuve, créée par <b>Florian des Sergents Bob</b>, <b>pour les Sergents Bob</b>.",
+      "Elle a été construite avec l'intelligence artificielle <b>Claude</b>.",
+      "Elle pilote l'écran du vidéoprojecteur pendant un match d'impro.",
+      "Elle est jeune : vos retours sont les bienvenus."] },
+  { ch: 0, t: 'Ce que vous allez faire', info: 1, x: [
+      "Dérouler une <b>soirée complète</b>, de la préparation à la fin du match.",
+      "<b>7 chapitres</b>, de courtes étapes, environ 10 minutes.",
+      "Vous manipulez une <b>copie</b> de l'app : rien n'est projeté pour de vrai.",
+      "À chaque étape : cliquez sur l'élément <b>entouré de jaune</b>…",
+      "…ou cliquez sur <b>Suivant</b>, et la visite fait le geste pour vous.",
+      "Au clavier : <kbd>→</kbd> passe à l'étape suivante, <kbd>←</kbd> revient en arrière.",
+      "À la fin, vous saurez ce que la salle voit, et quand."] },
+  { ch: 0, t: 'Un board pour vous, un écran pour la salle', info: 1, x: [
+      "À gauche : le <b>déroulé</b> de la soirée.",
+      "Au centre, deux aperçus : <b>En préparation</b> (vous seul le voyez) et <b>À l'antenne</b> (ce que voit le public).",
+      "En haut : les chronos et le score.",
+      "Sous les aperçus : les outils de l'impro en cours."], en: () => { S.zones = true; }, lv: () => { S.zones = false; } },
+  { ch: 1, t: 'La fiche du match', x: ['Tout commence par la <b>fiche</b> : équipes, couleurs, joueurs, règlement.', 'Ouvrez-la avec le sélecteur du haut.'], tg: '[data-a=page][data-v=sheet]', ex: 'page', ok: v => v === 'sheet', demo: 'sheet', keys: '⌘1', foc: '#r-bar', do: () => { S.page = 'sheet'; } },
+  { ch: 1, t: 'Deux couleurs qui se distinguent', x: ["Lynx en rouge, Hiboux en orange : la fiche prévient qu'on les confondra depuis la salle.", "Choisissez une autre couleur pour l'<b>Équipe B</b>, les Hiboux."], tg: '#sw-b', ex: 'color', ok: v => v[0] === 'b', demo: 'b:blue', ds: '[data-v="b:blue"]', foc: '#sw-b',
+    do: v => { S.teams.b.c = v.split(':')[1]; toast(close('red', S.teams.b.c) ? 'Encore trop proche du rouge' : "L'alerte a disparu"); }, done: () => !close('red', S.teams.b.c), af: ["La couleur suit l'équipe sur tous les écrans : accueil, vote, tableau des scores."] },
+  { ch: 1, t: 'Règlement et contenus', info: 1, x: [
+      "Deux autres onglets complètent la fiche.",
+      "<b>Règlement</b> : périodes, alertes de fin de période, taille des textes, types de fautes, catégories.",
+      "<b>Contenus</b> : affiche A4, sons, prochaines dates, réseaux sociaux (pour l'écran « Merci »).",
+      "Parcourez-les, puis continuez."], en: () => { S.tab = 'regl'; }, lv: () => { S.tab = 'match'; } },
+  { ch: 1, t: 'Retour au board', x: ["La fiche est prête.", "Passez au <b>Board</b> : c'est lui qui sert pendant la soirée."], tg: '[data-a=page][data-v=board]', ex: 'page', ok: v => v === 'board', demo: 'board', keys: '⌘2', foc: '#r-bar', do: () => { S.page = 'board'; } },
+  { ch: 2, t: 'Brancher le projecteur', x: ["Le vidéoprojecteur est branché.", "Ouvrez le menu <b>Sortie</b> : l'icône du projecteur, en haut à droite."], tg: '[data-a=menu]', ex: 'menu', foc: '.vg-tools', do: () => { S.menu = 'sortie'; } },
+  { ch: 2, t: "Choisir l'écran", x: ['Choisissez le vidéoprojecteur.', "Sans projecteur sous la main : « Fenêtre de test » permet de répéter."], tg: '#m-sortie', ex: 'output', demo: 'proj', ds: '[data-a=output]', foc: '.vg-tools',
+    do: () => { S.menu = null; S.out = true; }, af: ["La sortie est ouverte ; l'écran reste noir tant que rien n'est projeté.", "En salle : réglez l'image avec <b>Calage</b> <kbd>⌘K</kbd> (dernière icône de la barre).", "Vérifiez la mire de lisibilité depuis le dernier rang."] },
+  { ch: 2, t: 'On prépare, puis on projette', info: 1, x: [
+      "C'est <b>la règle</b> qui fait tout tenir.",
+      "Pendant que la salle voit un écran, le board <b>prépare déjà le suivant</b> (jaune pointillé, vous seul le voyez).",
+      "<b>Projeter</b> l'envoie à l'antenne.",
+      "Regardez la boucle d'une impro, ou cliquez sur les points pour choisir un moment."], en: () => { S.schema = true; S.sk = 0; }, lv: () => { S.schema = false; }, next: 'Compris' },
+  { ch: 2, t: 'Préparer, puis projeter', x: ["« Entrée du public » est en préparation : la salle ne voit encore rien.", "Envoyez-la à l'antenne avec le bouton rond <b>Projeter</b>."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('pub'); S.air = S.prep; prep('how', { k: 'how' }); }, af: ["L'écran est à l'antenne : la ligne passe en <b>DIRECT</b>.", "La séquence suivante se prépare déjà.", "C'est le geste de toute la soirée."] },
+  { ch: 2, t: 'Le Noir', x: ["Un imprévu ? <b>Noir</b> (sous Projeter) fond l'écran au noir, sans rien perdre.", "Un appui pour éteindre, un second pour rallumer."], tg: '[data-a=black]', ex: 'black', keys: '⌘B', foc: '#r-prev',
+    do: () => { S.black = !S.black; S.nb++; }, done: () => !S.black && S.nb >= 2, af: ["L'image revient telle qu'elle était.", "Le Noir sert aussi entre deux séquences, pour laisser la scène aux joueurs."] },
+  { ch: 3, t: "Dérouler l'ouverture", info: 1, foc: '#r-prev', x: [
+      "Accueil, présentation, échauffement, arbitre, équipes, hymnes…",
+      "Chaque séquence suit le même geste : <b>préparer, puis Projeter</b>.",
+      "Les hymnes s'activent ou se désactivent dans la fiche.",
+      "On avance le déroulé jusqu'au début de la 1re période."],
     en: () => { S.seqs.slice(0, 6).forEach(q => { q.st = 'done'; }); live('hb'); S.air = { k: 'anthem', c: 'b' }; prep('p1', { k: 'title', t: '1RE PÉRIODE', sub: "C'EST PARTI !" }); } },
-  { ch: 3, t: 'Ouvrir la période', x: "Projetez la <b>1re période</b> : un écran de titre, avec le score.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('p1'); S.air = S.prep; addImpro(1, 'p1'); S.card = newCard(); prep('c1', null); }, af: "La première impro est créée d'office, et sa carte vous attend. Au début de chaque période, la <b>Sirène</b> <kbd>⌥⌘S</kbd> (la cloche, à gauche de la barre) donne le coup d'envoi. Les impros suivantes s'ajoutent avec « + Ajouter une impro »." },
-  { ch: 4, t: 'Remplir la carte', x: "L'arbitre annonce : « Improvisation mixte, ayant pour thème… ». La carte suit cet ordre. Tapez le <b>thème</b>, ou choisissez-en un : l'aperçu suit chaque lettre.", tg: '#vg-title', ex: 'title', demo: 'La dernière valise', foc: '#r-work', chips: ['La dernière valise', 'Un lundi sur Mars'],
-    do: v => { S.card.title = v; }, done: () => S.card.title.trim().length >= 3, af: 'Le public ne voit toujours rien : la carte est seulement en préparation. À droite, la tuile « Joueurs en jeu » est éteinte, et la bande jaune du milieu dit déjà ce que Projeter montrera.' },
-  { ch: 4, t: 'La durée', x: "L'arbitre annonce trois minutes. Choisissez <b>3 min</b> dans les durées rapides.", tg: '#vg-durs', ex: 'dur', ok: v => v === '3', demo: '3', ds: '[data-a=dur][data-v="3"]', foc: '#r-work', do: () => { S.card.dur = 180; } },
-  { ch: 4, t: "Annoncer l'impro", x: "La carte est complète. Projetez-la au moment où l'arbitre l'annonce.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('c1'); S.air = { k: 'impro', n: 1, card: snap() }; S.inPlay = true; prep('v1', { k: 'vote', card: snap() }); }, af: "La carte est à l'antenne. Le <b>vote</b> est déjà en préparation, la carte devient un résumé « ● DIRECT » à gauche, et les <b>Joueurs en jeu</b> s'activent à droite." },
-  { ch: 4, t: 'Qui joue ?', x: "Cochez les joueurs qui entrent en jeu, par exemple <b>Zoé</b>. Ce n'est jamais projeté : cela sert à l'historique et à l'Impro d'or.", tg: '[data-a=player][data-v="Zoé"]', ex: 'player', ok: v => v === 'Zoé', demo: 'Zoé', foc: '#r-work', do: v => { S.pl[v] = true; }, af: 'Chaque équipe a son compteur (1/3). On peut cocher et décocher jusqu’au score.' },
-  { ch: 4, t: "Le chrono de l'impro", x: "Lancez le chrono de l'impro, dans la carte du haut, au moment du « Top ! ».", tg: '[data-a=iclock]', ex: 'iclock', foc: '#r-clock', do: () => { S.improRun = true; }, af: "Il décompte la durée annoncée (ici 3:00). Une fois la durée dépassée, il passe en rouge et compte en « + ». Rien de tout cela n'est projeté." },
-  { ch: 4, t: 'Faute sifflée', x: "L'arbitre siffle les Lynx, qui ont déjà deux fautes. La zone « Faute sifflée par l'arbitre » est facultative : elle ne sert que s'il y a faute. Cliquez sur <b>+ Faute Lynx</b>.", tg: '[data-a=foulmenu][data-v=a]', ex: 'foulmenu', ok: v => v === 'a', demo: 'a', foc: '#r-work',
+  { ch: 3, t: 'Ouvrir la période', x: ["Projetez la <b>1re période</b>.", "C'est un écran de titre, avec le score."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('p1'); S.air = S.prep; addImpro(1, 'p1'); S.card = newCard(); prep('c1', null); }, af: ["La 1re impro est créée d'office : sa carte vous attend.", "Début de période : la <b>Sirène</b> <kbd>⌥⌘S</kbd> (la cloche, à gauche de la barre) donne le coup d'envoi.", "Les impros suivantes : « + Ajouter une impro »."] },
+  { ch: 4, t: 'Remplir la carte', x: ["L'arbitre annonce : « Improvisation mixte, ayant pour thème… ».", "La carte suit cet ordre.", "Tapez le <b>thème</b>, ou choisissez-en un : l'aperçu suit chaque lettre."], tg: '#vg-title', ex: 'title', demo: 'La dernière valise', foc: '#r-work', chips: ['La dernière valise', 'Un lundi sur Mars'],
+    do: v => { S.card.title = v; }, done: () => S.card.title.trim().length >= 3, af: ['Le public ne voit toujours rien : la carte est seulement en préparation.', "À droite, « Joueurs en jeu » est éteinte.", "La bande jaune du milieu dit déjà ce que Projeter montrera."] },
+  { ch: 4, t: 'La durée', x: ["L'arbitre annonce trois minutes.", "Choisissez <b>3 min</b> dans les durées rapides."], tg: '#vg-durs', ex: 'dur', ok: v => v === '3', demo: '3', ds: '[data-a=dur][data-v="3"]', foc: '#r-work', do: () => { S.card.dur = 180; } },
+  { ch: 4, t: "Annoncer l'impro", x: ["La carte est complète.", "Projetez-la au moment où l'arbitre l'annonce."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('c1'); S.air = { k: 'impro', n: 1, card: snap() }; S.inPlay = true; prep('v1', { k: 'vote', card: snap() }); }, af: ["La carte est à l'antenne.", "Le <b>vote</b> est déjà en préparation.", "La carte devient un résumé « ● DIRECT » à gauche ; les <b>Joueurs en jeu</b> s'activent à droite."] },
+  { ch: 4, t: 'Qui joue ?', x: ["Cochez les joueurs qui entrent en jeu, par exemple <b>Zoé</b>.", "Jamais projeté : cela sert à l'historique et à l'Impro d'or."], tg: '[data-a=player][data-v="Zoé"]', ex: 'player', ok: v => v === 'Zoé', demo: 'Zoé', foc: '#r-work', do: v => { S.pl[v] = true; }, af: ['Chaque équipe a son compteur (1/3).', "On peut cocher et décocher jusqu'au score."] },
+  { ch: 4, t: "Le chrono de l'impro", x: ["Lancez le chrono de l'impro, dans la carte du haut, au « Top ! »."], tg: '[data-a=iclock]', ex: 'iclock', foc: '#r-clock', do: () => { S.improRun = true; }, af: ["Il décompte la durée annoncée (ici 3:00).", "Au-delà, il passe en rouge et compte en « + ».", "Rien de tout cela n'est projeté."] },
+  { ch: 4, t: 'Faute sifflée', x: ["L'arbitre siffle les Lynx, qui ont déjà deux fautes.", "La zone « Faute sifflée par l'arbitre » est facultative : elle ne sert qu'en cas de faute.", "Cliquez sur <b>+ Faute Lynx</b>."], tg: '[data-a=foulmenu][data-v=a]', ex: 'foulmenu', ok: v => v === 'a', demo: 'a', foc: '#r-work',
     en: () => { S.past = [{ t: 'a', type: 'Retard de jeu', old: 1 }, { t: 'a', type: 'Obstruction', old: 1 }]; S.fouls.a = 2; }, do: () => { S.menu = 'foul'; } },
-  { ch: 4, t: 'Le type de faute', x: "Choisissez la faute annoncée par l'arbitre, par exemple <b>Cabotinage</b>. Si la raison n'a pas été comprise, le dernier choix, « À clarifier par l'arbitre », compte comme une faute ordinaire.", tg: '#m-types', ex: 'foultype', demo: 'Cabotinage', ds: '[data-v="Cabotinage"]', foc: '#r-work', do: v => { S.menu = null; S.pending = [{ t: 'a', type: v }]; } },
-  { ch: 4, t: 'Valider la faute', x: "Plusieurs fautes peuvent partir ensemble, pour une équipe ou pour les deux : elles comptent pour un seul coup de sifflet. Ici, il n'y en a qu'une : cliquez sur <b>Valider la faute sifflée</b>.", tg: '[data-a=whistle]', ex: 'whistle', foc: '#r-work',
+  { ch: 4, t: 'Le type de faute', x: ["Choisissez la faute annoncée par l'arbitre, par exemple <b>Cabotinage</b>.", "Raison non comprise ? « À clarifier par l'arbitre » compte comme une faute ordinaire."], tg: '#m-types', ex: 'foultype', demo: 'Cabotinage', ds: '[data-v="Cabotinage"]', foc: '#r-work', do: v => { S.menu = null; S.pending = [{ t: 'a', type: v }]; } },
+  { ch: 4, t: 'Valider la faute', x: ["Plusieurs fautes peuvent partir ensemble, pour une équipe ou pour les deux : un seul coup de sifflet.", "Ici, une seule : cliquez sur <b>Valider la faute sifflée</b>."], tg: '[data-a=whistle]', ex: 'whistle', foc: '#r-work',
     do: () => { const f = S.pending[0]; S.past.push({ t: 'a', type: f.type, pt: 1 }); S.pending = []; S.fouls.a = 0; S.score.b = 1; S.notice = 'Faute pour Lynx · +1 point pour Hiboux'; prep('f1', { k: 'foul', team: 'a', type: f.type }); },
-    af: "C'est la 3e faute des Lynx : les Hiboux gagnent un point. Le score part en direct, sans passer par Projeter. L'écran des fautes est prêt et prend la place du vote." },
-  { ch: 4, t: 'Montrer la faute', x: "Projetez l'écran des fautes, pour que la salle comprenne d'où vient le point.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev', do: () => { live('f1'); S.air = S.prep; prep('v1', { k: 'vote', card: snap() }); }, af: "Le vote se prépare de nouveau. Si l'arbitre siffle encore, la faute reprend la place du vote, autant de fois que nécessaire." },
-  { ch: 4, t: 'Le vote', x: "Fin de l'impro. Le vote est déjà en préparation : projetez-le.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: 'Le score est caché pendant le vote, pour ne pas influencer la salle. L’interrupteur « Score et fautes en bandeau » de la bande jaune permet de le montrer pour ce vote seulement.' },
-  { ch: 4, t: 'Le résultat', x: "Les cartons sont levés, l'arbitre tranche. Cliquez sur l'équipe qui remporte le vote, ou sur Égalité.", tg: '#vg-res', ex: 'result', demo: 'b', ds: '[data-a=result][data-v=b]', foc: '#r-work',
+    af: ["3e faute des Lynx : les Hiboux gagnent un point.", "Le score part en direct, sans passer par Projeter.", "L'écran des fautes est prêt et prend la place du vote."] },
+  { ch: 4, t: 'Montrer la faute', x: ["Projetez l'écran des fautes.", "La salle comprend d'où vient le point."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev', do: () => { live('f1'); S.air = S.prep; prep('v1', { k: 'vote', card: snap() }); }, af: ["Le vote se prépare de nouveau.", "Si l'arbitre siffle encore, la faute reprend la place du vote, autant de fois que nécessaire."] },
+  { ch: 4, t: 'Le vote', x: ["Fin de l'impro.", "Le vote est déjà en préparation : projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: ['Le score est caché pendant le vote, pour ne pas influencer la salle.', "Pour le montrer : l'interrupteur « Score et fautes en bandeau » de la bande jaune (ce vote seulement)."] },
+  { ch: 4, t: 'Le résultat', x: ["Les cartons sont levés, l'arbitre tranche.", "Cliquez sur l'équipe qui remporte le vote, ou sur Égalité."], tg: '#vg-res', ex: 'result', demo: 'b', ds: '[data-a=result][data-v=b]', foc: '#r-work',
     do: v => { const from = Object.assign({}, S.score); if (v !== 'b') S.score.a++; if (v !== 'a') S.score.b++; const to = Object.assign({}, S.score); S.result = v; live('r1'); S.air = { k: 'point', res: v, from, to, card: snap() }; prep('t1', { k: 'board', res: v, from, to }); },
-    af: 'Un seul clic a compté le point et projeté le résultat : ici, pas besoin de Projeter.' },
-  { ch: 4, t: 'Le score', x: "Le tableau des scores est en préparation : la bande indique « ancien score → nouveau score ». Un vote mal compté se corrige ici, avant de projeter. Projetez le tableau : les volets tournent.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('t1'); S.air = S.prep; addImpro(2, 't1'); S.skip = true; prep('c2', { k: 'impro', n: 2, card: newCard() }); }, af: 'Une nouvelle carte est déjà prête. La boucle recommence : carte, vote, résultat, score.' },
-  { ch: 5, t: 'Le chrono de la période', x: 'Lancez le chrono de la période, dans la carte du haut. Pour la visite, le temps passe en accéléré.', tg: '[data-a=clock]', ex: 'clock', foc: '#r-clock', wait: 2500,
+    af: ['Un seul clic a compté le point et projeté le résultat.', "Pas besoin de Projeter ici."] },
+  { ch: 4, t: 'Le score', x: ["Le tableau des scores est en préparation.", "La bande indique « ancien score → nouveau score » : un vote mal compté se corrige ici, avant de projeter.", "Projetez le tableau : les volets tournent."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('t1'); S.air = S.prep; addImpro(2, 't1'); S.skip = true; prep('c2', { k: 'impro', n: 2, card: newCard() }); }, af: ['Une nouvelle carte est déjà prête.', 'La boucle recommence : carte, vote, résultat, score.'] },
+  { ch: 5, t: 'Le chrono de la période', x: ['Lancez le chrono de la période, dans la carte du haut.', 'Pour la visite, le temps passe en accéléré.'], tg: '[data-a=clock]', ex: 'clock', foc: '#r-clock', wait: 2500,
     do: () => { S.run = true; S.remain = 900; S.alert = true; S.banner = true; } },
-  { ch: 5, t: "L'alerte des 15 minutes", x: "À 15 minutes de la fin, le chrono passe au jaune et un bandeau prévient la salle pendant 10 secondes. Cliquez sur l'alerte pour l'effacer.", tg: '[data-a=alert]', ex: 'alert', foc: '#r-clock',
-    do: () => { S.alert = false; S.banner = false; }, af: "Le temps n'est jamais affiché en permanence au public : seul le bandeau d'alerte le montre un instant (les alertes se règlent dans la fiche)." },
-  { ch: 5, t: 'Fin de la période', x: "La période se termine et il n'y a plus d'impro à jouer. Dans la carte vide de l'impro 2, cliquez sur <b>Pas d'autre impro</b>.", tg: '[data-a=skip]', ex: 'skip', foc: '#r-work',
+  { ch: 5, t: "L'alerte des 15 minutes", x: ["À 15 minutes de la fin, le chrono passe au jaune.", "Un bandeau prévient la salle pendant 10 secondes.", "Cliquez sur l'alerte pour l'effacer."], tg: '[data-a=alert]', ex: 'alert', foc: '#r-clock',
+    do: () => { S.alert = false; S.banner = false; }, af: ["Le temps n'est jamais affiché en permanence au public : seul le bandeau le montre un instant.", "Les alertes se règlent dans la fiche."] },
+  { ch: 5, t: 'Fin de la période', x: ["La période se termine : il n'y a plus d'impro à jouer.", "Dans la carte vide de l'impro 2, cliquez sur <b>Pas d'autre impro</b>."], tg: '[data-a=skip]', ex: 'skip', foc: '#r-work',
     do: () => { S.seqs = S.seqs.filter(q => !/^[icfvrt]2$/.test(q.id)); S.skip = false; S.notice = ''; prep('ent', { k: 'inter', sc: Object.assign({}, S.score) }); } },
-  { ch: 5, t: "Projeter l'entracte", x: "L'entracte est en préparation, avec le score à la mi-temps. Projetez-le.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: "Au retour, la 2e période se déroule comme la première : carte, fautes, vote, résultat, score." },
-  { ch: 5, t: 'La 2e période', x: "Passons directement à la fin de soirée : la 2e période est jouée, les Hiboux mènent 5 à 3. Le déroulé se termine par « Fin du match », puis « Remerciements ».", info: 1, foc: '#r-prev',
+  { ch: 5, t: "Projeter l'entracte", x: ["L'entracte est en préparation, avec le score à la mi-temps.", "Projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: ["Au retour, la 2e période se déroule comme la 1re : carte, fautes, vote, résultat, score."] },
+  { ch: 5, t: 'La 2e période', info: 1, foc: '#r-prev', x: [
+      "Passons directement à la fin de soirée.",
+      "La 2e période est jouée : les Hiboux mènent 5 à 3.",
+      "Le déroulé se termine par « Fin du match », puis « Remerciements »."],
     en: () => { live('p2'); S.air = { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: { a: 0, b: 1 } }; S.score = { a: 3, b: 5 }; S.fouls = { a: 0, b: 0 }; S.remain = 95; S.gold = true; prep('fin', { k: 'win', sc: { a: 3, b: 5 }, gold: 'La dernière valise' }); } },
-  { ch: 6, t: 'Fin du match', x: "La fin du match est en préparation : vainqueur, score final et <b>Impro d'or</b>. Projetez-la.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('fin'); S.air = S.prep; prep('mer', { k: 'merci' }); }, af: "L'Impro d'or se désigne par un clic droit sur une impro du déroulé (« Désigner comme Impro d'or ») : ici, la première. Un clic droit sur une étape déjà passée permet aussi de la <b>reprendre</b> (« Revenir à cette étape »)." },
-  { ch: 6, t: 'Remerciements', x: "Dernier écran : « Merci ! », les prochaines dates, et les réseaux sociaux avec leurs QR codes. Tout cela se règle dans l'onglet Contenus de la fiche. Projetez-le.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+  { ch: 6, t: 'Fin du match', x: ["La fin du match est en préparation : vainqueur, score final et <b>Impro d'or</b>.", "Projetez-la."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('fin'); S.air = S.prep; prep('mer', { k: 'merci' }); }, af: ["Impro d'or : clic droit sur une impro du déroulé, « Désigner comme Impro d'or » (ici, la 1re).", "Clic droit sur une étape déjà passée : « Revenir à cette étape » pour la <b>reprendre</b>."] },
+  { ch: 6, t: 'Remerciements', x: ["Dernier écran : « Merci ! », les prochaines dates, les réseaux sociaux et leurs QR codes.", "Tout se règle dans l'onglet Contenus de la fiche.", "Projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
     do: () => { live('mer'); S.air = S.prep; prep('mer', null); } },
-  { ch: 6, t: 'Enregistrer', x: 'Le match se garde dans un fichier <b>.impromatch</b> : fiche, impros, votes, fautes, chronos. Enregistrez-le.', tg: '#vg-save', ex: 'save', keys: '⌘S', save: 1,
-    do: () => { S.dirty = false; toast('Match enregistré'); }, af: "Même sans enregistrer, rien n'est perdu : chaque modification est sauvegardée une seconde plus tard. Après une coupure, ImproMatch rouvre le match tel quel, chronos compris." },
-  { ch: 6, t: 'À vous de jouer', x: 'Vous venez de dérouler une soirée. Les raccourcis à retenir :', info: 1, end: 1, en: () => { S.bravo = true; }, lv: () => { S.bravo = false; },
+  { ch: 6, t: 'Enregistrer', x: ['Le match se garde dans un fichier <b>.impromatch</b> : fiche, impros, votes, fautes, chronos.', 'Enregistrez-le.'], tg: '#vg-save', ex: 'save', keys: '⌘S', save: 1,
+    do: () => { S.dirty = false; toast('Match enregistré'); }, af: ["Même sans enregistrer, rien n'est perdu : chaque modification est sauvegardée une seconde plus tard.", "Après une coupure, Impro Match rouvre le match tel quel, chronos compris."] },
+  { ch: 6, t: 'À vous de jouer', x: ['Vous venez de dérouler une soirée.', 'Les raccourcis à retenir :'], info: 1, end: 1, en: () => { S.bravo = true; }, lv: () => { S.bravo = false; },
     short: [['⌘↩', 'Projeter'], ['⌘B', 'Noir'], ['⌘→', 'Préparer la séquence suivante'], ['⌥⌘S', 'Sirène'], ['⌘K', 'Calage'], ['⌘S', 'Enregistrer']] },
 ];
 
@@ -842,7 +907,8 @@ function act(a, v) {
   const s = STEPS[cur];
   if (a === 'siren') { siren(); return; }
   if (a === 'tab') { S.tab = v; render(); return; }
-  if (a === 'sch') { S.sk = +v; render(); return; }
+  if (a === 'sch') { S.sk = +v; S.play = false; render(); return; }
+  if (a === 'schplay') { S.play = !S.play; render(); return; }
   if (a === 'title' && s.ex === 'title') { if (busy) return; s.do(v); render(); const ok = !!s.done(); if (ok !== done) { done = ok; coach(true); } return; }
   if (busy || done || s.ex !== a || (s.ok && !s.ok(v))) { nudge(); return; }
   s.do(v); render();
@@ -852,8 +918,10 @@ function act(a, v) {
 function coach(keep) {
   const s = STEPS[cur], c = $('#vg-copy');
   const ids = STEPS.map((q, i) => i).filter(i => STEPS[i].ch === s.ch);
-  let body = note ? `<p class="vg-ok"><span>${note}</span></p>` : '';
-  body += `<p>${s.x}</p>`;
+  const lst = v => Array.isArray(v) ? (v.length > 1 ? `<ul>${v.map(i => `<li>${i}</li>`).join('')}</ul>` : `<span>${v[0]}</span>`) : `<span>${v}</span>`;
+  let body = note ? `<div class="vg-ok">${lst(note)}</div>` : '';
+  if (s.logo) body += `<div class="vg-logo">${LOGO}</div>`;
+  body += `<div class="vg-x">${lst(s.x)}</div>`;
   if (s.chips) body += `<div class="vg-chips">${s.chips.map(t => `<button type="button" data-chip="${esc(t)}">${esc(t)}</button>`).join('')}</div>`;
   if (s.save) body += `<div><button type="button" class="vg-btn" id="vg-save">Enregistrer le match</button></div>`;
   if (s.short) body += `<dl class="vg-short">${s.short.map(([k, l]) => `<dt><kbd>${k}</kbd></dt><dd>${l}</dd>`).join('')}</dl>`;
@@ -871,7 +939,7 @@ function coach(keep) {
     const all = STEPS.filter(q => q.ch === i).length, before = STEPS.slice(0, cur + (done ? 1 : 0)).filter(q => q.ch === i).length;
     return `<button type="button" data-ch="${i}" class="${i === s.ch ? 'cur' : i < s.ch ? 'past' : ''}" aria-label="Chapitre ${i + 1} : ${n}"><span>${i + 1} · ${n}</span><i><b style="width:${100 * before / all}%"></b></i></button>`;
   }).join('');
-  const li = c.querySelector('.vg-steps .cur'); if (li && !keep) li.scrollIntoView({ block: 'nearest' });
+  const li = c.querySelector('.vg-steps .cur'); if (li && !keep) c.scrollTop = li.offsetTop + li.offsetHeight <= c.clientHeight ? 0 : Math.max(0, li.offsetTop - 8);
   requestAnimationFrame(cam);
 }
 
@@ -960,8 +1028,8 @@ document.addEventListener('keydown', e => {
   if (mod && k === 'enter') { e.preventDefault(); act('project'); }
   else if (mod && k === 'b') { e.preventDefault(); act('black'); }
   else if (mod && k === 's') { e.preventDefault(); act('save'); }
-  else if (!mod && (k === 'enter' || (k === 'arrowright' && !typing)) && e.target.tagName !== 'BUTTON') { e.preventDefault(); next(); }
-  else if (!mod && k === 'arrowleft' && !typing && cur > 0) go(cur - 1);
+  else if (!mod && !e.altKey && ((k === 'enter' && e.target.tagName !== 'BUTTON') || (k === 'arrowright' && !typing))) { e.preventDefault(); next(); }
+  else if (!mod && !e.altKey && k === 'arrowleft' && !typing) { e.preventDefault(); if (cur > 0) go(cur - 1); }
 });
 window.addEventListener('resize', cam);
 if (window.ResizeObserver) new ResizeObserver(cam).observe($('#vg-view'));
