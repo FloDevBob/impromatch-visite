@@ -110,7 +110,7 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .vg-side h4 { margin: 2px 14px 4px; font-size: 11.5px; color: var(--dim); font-weight: 600; }
 #r-list { flex: 1; min-height: 0; padding: 0 8px 8px; }
 .row { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 13px; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,.05); }
-.row.ind { padding-left: 34px; } .row.per { font-weight: 600; margin-top: 3px; } .row.sel { background: rgba(255,255,255,.13); }
+.row.ind { padding-left: 34px; } .row.per { font-weight: 600; margin-top: 3px; } .row.sel { background: var(--accent); color: var(--ink); } .row.sel .st.pend::before { border-color: var(--ink); } .row.sel .st.done { color: var(--ink); } .row.sel em { color: var(--ink); }
 .row.hd { font-weight: 600; padding-left: 20px; overflow: hidden; } .row.hd span { overflow: hidden; text-overflow: ellipsis; }
 .row.grp { font-weight: 600; padding-left: 4px; gap: 7px; } .row.grp small { margin-left: auto; font-size: 11px; color: var(--dim); font-weight: 400; } .row.grp .chev { color: var(--dim); }
 .gbody .row { padding-left: 24px; } .gbody .row.ind { padding-left: 38px; } .gbody .row.hd { padding-left: 22px; } .gbody .addrow { margin-left: 24px; width: calc(100% - 30px); }
@@ -443,7 +443,7 @@ function live(id) { S.seqs.forEach(q => { if (q.st === 'live') q.st = 'done'; })
 function prep(id, scr) { S.sel = id; S.prep = scr; }
 function addImpro(n, after) {
   const i = S.seqs.findIndex(q => q.id === after) + 1;
-  S.seqs.splice(i, 0, { id: 'i' + n, hd: n }, ...[['c', 'Carte'], ['f', 'Faute'], ['v', 'Vote'], ['r', 'Résultat'], ['t', 'Score']].map(([k, l]) => ({ id: k + n, l, ind: 1 })));
+  S.seqs.splice(i, 0, { id: 'i' + n, hd: n }, ...[['c', 'Carte'], ['f', 'Faute'], ['v', 'Vote'], ['r', 'Résultat+Score']].map(([k, l]) => ({ id: k + n, l, ind: 1 })));
 }
 const newCard = () => ({ title: '', cat: 'Libre', nat: 'Mixte', dur: 120 });
 const snap = () => JSON.parse(JSON.stringify(S.card));
@@ -494,7 +494,7 @@ function scrHTML(st) {
       <div class="s6" style="font-size:44px;letter-spacing:.06em">IMPRO 1${st.card && st.card.title ? ' · ' + up(st.card.title) : ''}</div>
       <div style="font-size:64px;letter-spacing:.1em">${!r ? 'RÉSULTAT' : r === 'tie' ? 'ÉGALITÉ' : 'POINT POUR'}</div>
       <div style="font-size:${r === 'tie' ? 130 : 170}px">${!r ? '…' : r === 'tie' ? 'UN POINT CHACUN' : up(S.teams[r].name)}</div>
-      ${pill(r ? st.from : st.sc || z, r ? st.to : st.sc || z, .9)}</div>`; }
+      </div>`; }
     case 'board': return `<div style="display:flex;flex-direction:column;gap:28px;align-items:center;width:100%"><div class="s6 sec" style="font-size:44px;letter-spacing:.08em">TABLEAU DES SCORES</div>
       <div class="g" style="gap:48px;align-items:flex-start;width:100%">${['a', 'b'].map(s => `<div style="flex:1;display:flex;flex-direction:column;gap:16px;align-items:center">
         <div style="font-size:64px;color:${col(s)}">${up(S.teams[s].name)}</div>
@@ -534,7 +534,7 @@ function setScreen(h, st) {
 }
 
 // ---------- Schéma animé : on prépare, puis on projette ----------
-const FLOW = ['Carte', 'Fautes', 'Vote', 'Résultat', 'Score'];
+const FLOW = ['Carte', 'Fautes', 'Vote', 'Résultat+Score'];
 const SCH = [
   { l: 'Carte prête', p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, cap: '<b>1.</b> Le board prépare toujours l’écran suivant. <b>Vous seul</b> le voyez, en jaune pointillé.' },
   { l: 'Projeter', p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, press: 1, cap: '<b>2.</b> <b>Projeter</b> l’envoie à l’antenne.' },
@@ -544,9 +544,9 @@ const SCH = [
   { l: 'Vote prêt', p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, cap: '…puis le <b>vote</b> se prépare de nouveau.' },
   { l: 'Projeter', p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, press: 1, cap: 'Fin de l’impro : <b>Projeter</b> envoie le vote.' },
   { l: 'Résultat', p: 'Résultat', a: 'À vos cartons !', ai: 2, pi: 3, cap: 'La salle vote. Pendant ce temps, le <b>résultat</b> attend l’arbitre.' },
-  { l: 'Clic équipe', p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, click: 1, cap: '<b>Seule exception :</b> un clic sur l’équipe gagnante compte le point <b>et</b> le projette tout de suite.' },
-  { l: 'Projeter', p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, press: 1, cap: '<b>Projeter</b> montre le tableau, où les volets tournent.' },
-  { l: 'Suivante', p: 'Carte de l’impro suivante', a: 'Tableau des scores', ai: 4, pi: 0, cap: 'Et ça recommence avec l’impro suivante.' },
+  { l: 'Clic équipe', p: 'Carte de l’impro suivante', a: 'Point pour les Hiboux', ai: 3, pi: 0, click: 1, cap: '<b>Seule exception :</b> un clic sur l’équipe gagnante compte le point <b>et</b> le projette tout de suite, sans Projeter.' },
+  { l: 'Tableau', p: 'Carte de l’impro suivante', a: 'Tableau des scores', ai: 3, pi: 0, cap: '4 secondes plus tard, le <b>tableau des scores</b> s’enchaîne tout seul : les volets tournent.' },
+  { l: 'Suivante', p: 'Carte de l’impro suivante', a: 'Tableau des scores', ai: 3, pi: 0, cap: 'La carte suivante est déjà prête : et ça recommence.' },
 ];
 function schemaBuild() {
   return `<div class="sch"><h2>On prépare, <span>puis on projette</span></h2>
@@ -723,7 +723,7 @@ function renderBoard() {
   put('#r-pcol', `<button type="button" class="go" data-a="project" aria-label="Projeter" ${S.prep ? '' : 'disabled'}>${ic('arrow-right', 22, 1.8)}</button><b>Projeter</b><small>⌘↩</small>
     <button type="button" class="nb" data-a="black" aria-label="${S.black ? 'Rallumer' : 'Noir'}">${ic(S.black ? 'sun-light' : 'half-moon', 16)}</button><span>${S.black ? 'Rallumer' : 'Noir'}</span>`);
   // Centre : fil d'étapes, puis trois tuiles fixes (Carte · étape en préparation · Joueurs en jeu), comme l'app
-  const stg = { c1: 0, f1: 1, v1: 2, r1: 3, t1: 4, c2: 0 }[S.sel];
+  const stg = { c1: 0, f1: 1, v1: 2, r1: 3, c2: 0 }[S.sel];
   let w = S.notice ? `<div class="notice">${ic('triangle-flag', 15)}${esc(S.notice)}</div>` : '';
   if (stg == null) w += `<p class="muted" style="margin:0;font-size:13.5px">Séquence « ${esc((seq(S.sel) || {}).l || '')} » : rien à saisir. Projetez-la avec ⌘↩.</p>`;
   else {
@@ -740,7 +740,7 @@ function renderBoard() {
         ${mine.length ? `<div class="fouls" style="display:block"><ul>${mine.map(p => `<li><i style="background:${col(p.t)}"></i>${esc(S.teams[p.t].name)} · ${esc(p.type)}${p.pt ? `<b>+1 ${esc(S.teams.b.name)}</b>` : ''}</li>`).reverse().join('')}</ul></div>` : '<span class="muted">Aucune faute sifflée pendant cette impro.</span>'}</div>`;
     const plT = (s, names) => `<div><h6><span style="color:${col(s)};font-size:14.5px">${esc(S.teams[s].name)}</span><small>${names.filter(x => S.pl[x]).length}/${names.length}</small></h6>${names.map((nm, i) => `<button type="button" class="plb" data-a="player" data-v="${nm}" ${plOn ? '' : 'disabled'}><i class="cb ${S.pl[nm] ? '' : 'off'}">${S.pl[nm] ? '✓' : ''}</i>${nm}${i < 2 ? `<u>${'CA'[i]}</u>` : ''}</button>`).join('')}</div>`;
     const players = wd => `<div class="tile ${plOn ? '' : 'off'}" style="width:${wd}px"><h3>${ic('group', 16)}Joueurs en jeu<small style="font-weight:400">non projeté</small></h3><div class="plays">${plT('a', ['Zoé', 'Malik', 'Jeanne'])}${plT('b', ['Léa', 'Sami', 'Nour'])}</div>${plOn ? '' : '<span class="cap">Se cochent dès que la carte est à l\'antenne, jusqu\'au score.</span>'}</div>`;
-    w += `<div class="rail"><b>Impro ${n}</b>` + ['Carte', 'Fautes', 'Vote', 'Résultat', 'Score'].map((l, i) => { const q = seq('cfvrt'[i] + n) || {}; return `<span class="${i === 1 ? 'opt' : ''} ${i === stg ? 'on' : ''}">${q.st === 'done' ? `<i class="st done">${ic('check-circle', 13, 1.8)}</i>` : q.st === 'live' ? '<i class="st live"></i>' : ''}${l}</span>${i < 4 ? `<u>${ic('nav-arrow-right', 11, 2)}</u>` : ''}`; }).join('') + '</div><div class="tiles">';
+    w += `<div class="rail"><b>Impro ${n}</b>` + ['Carte', 'Fautes', 'Vote', 'Résultat+Score'].map((l, i) => { const q = seq('cfvr'[i] + n) || {}; return `<span class="${i === 1 ? 'opt' : ''} ${i === stg ? 'on' : ''}">${q.st === 'done' ? `<i class="st done">${ic('check-circle', 13, 1.8)}</i>` : q.st === 'live' ? '<i class="st live"></i>' : ''}${l}</span>${i < 3 ? `<u>${ic('nav-arrow-right', 11, 2)}</u>` : ''}`; }).join('') + '</div><div class="tiles">';
     if (stg === 0) {
       const k = S.sel === 'c1' ? c : newCard(), dis = S.sel === 'c2' ? 'disabled' : '';
       const pm = (sign, off) => `<i class="pm2 ${off ? 'off' : ''}" style="width:38px;height:24px">${ic(sign, 12)}</i>`;
@@ -756,19 +756,14 @@ function renderBoard() {
     } else {
       const fl = ['a', 'b'].map(s => S.teams[s].name + ' ' + mine.filter(p => p.t === s).length).join(' · ');
       w += `<div class="tile" style="width:220px"><h3 style="color:var(--dim)">Carte${cst === 'live' ? '<small class="live">● DIRECT</small>' : cst === 'done' ? '<small class="ok">✓ JOUÉE</small>' : ''}</h3>
-        <b style="font-size:17px">${esc(c.title || 'Sans thème')}</b><dl class="kv"><dt>Nature</dt><dd>${c.nat}</dd><dt>Catégorie</dt><dd>${esc(c.cat)}</dd><dt>Joueurs</dt><dd>Illimité</dd><dt>Durée</dt><dd>${mmss(c.dur)}</dd>${mine.length ? `<dt>Fautes</dt><dd>${esc(fl)}</dd>` : ''}${S.result && stg >= 4 ? `<dt>Vote</dt><dd>${S.result === 'tie' ? 'Égalité' : esc(S.teams[S.result].name)}</dd>` : ''}</dl>
+        <b style="font-size:17px">${esc(c.title || 'Sans thème')}</b><dl class="kv"><dt>Nature</dt><dd>${c.nat}</dd><dt>Catégorie</dt><dd>${esc(c.cat)}</dd><dt>Joueurs</dt><dd>Illimité</dd><dt>Durée</dt><dd>${mmss(c.dur)}</dd>${mine.length ? `<dt>Fautes</dt><dd>${esc(fl)}</dd>` : ''}${S.result && stg >= 3 ? `<dt>Vote</dt><dd>${S.result === 'tie' ? 'Égalité' : esc(S.teams[S.result].name)}</dd>` : ''}</dl>
         <span style="flex:1"></span><button type="button" class="btn" data-a="x" style="align-self:center">${ic('page', 14)}Modifier la carte</button></div>`;
       w += `<div class="tile act" style="flex:1">`;
       if (stg === 1) w += nbn('Projeter montrera', 'L\'écran des fautes', 'puis le vote se prépare de nouveau') + foulTools();
       else if (stg === 2) w += nbn('Projeter montrera', 'L\'écran de vote', '', '<span style="display:flex;gap:10px;align-items:center;font-size:12px">Score et fautes en bandeau<i class="sw2"></i></span>') + (S.inPlay ? foulTools() : '<p class="muted" style="font-size:13px">L\'écran de vote se projette avec <b>Projeter</b>. Les fautes ne se saisissent que pendant le jeu.</p>');
-      else if (stg === 3) w += nbn('Pas besoin de Projeter', 'Un clic compte le point et montre le résultat') + `<b style="font-size:15px">Qui remporte le vote ?</b><div class="res" id="vg-res">
+      else if (stg === 3) w += nbn('Pas besoin de Projeter', 'Le point, puis le tableau des scores', 'un clic suffit ; la carte suivante se prépare') + `<b style="font-size:15px">Qui remporte le vote ?</b><div class="res" id="vg-res">
         <button type="button" data-a="result" data-v="a" style="background:${col('a')}"><small>Point pour</small><span>${esc(S.teams.a.name)}</span></button><button type="button" data-a="result" data-v="tie" style="background:#6E6E73"><small>Égalité</small><span>un point chacune</span></button><button type="button" data-a="result" data-v="b" style="background:${col('b')}"><small>Point pour</small><span>${esc(S.teams.b.name)}</span></button></div>
-        <span class="cap" style="font-size:12px">Le tableau des scores se prépare ensuite. Un mauvais clic se corrige à l'étape Score, avant de le projeter.</span>`;
-      else {
-        const pv = S.prep && S.prep.k === 'board' ? S.prep : { from: S.score, to: S.score };
-        w += nbn('Projeter montrera', 'Le tableau des scores', 'puis la carte de l\'impro suivante se prépare') + `<div class="big"><span class="m">${pv.from.a} — ${pv.from.b}</span><span class="m">${ic('arrow-right', 22, 1.8)}</span><span>${pv.to.a} — ${pv.to.b}</span><span class="cap" style="font:12px var(--ui);max-width:170px">Les volets défilent de l'ancien score au nouveau.</span></div>
-          <div><p class="cap" style="font-size:12px;margin-bottom:6px">Corriger le vote (le résultat corrigé repart à l'écran)</p><div class="corr">${['a', 'tie', 'b'].map(k2 => `<button type="button" class="btn" data-a="x">${k2 === 'tie' ? 'Égalité' : esc(S.teams[k2].name)}</button>`).join('')}</div></div>`;
-      }
+        <span class="cap" style="font-size:12px">Le point reste 4 s à l'écran, puis le tableau des scores s'enchaîne (durée réglable dans le règlement).</span>`;
       w += `</div>${players(280)}`;
     }
     w += '</div>';
@@ -867,10 +862,14 @@ const STEPS = [
   { ch: 4, t: 'Le vote', x: ["Fin de l'impro.", "Le vote est déjà en préparation : projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
     do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: ['Le score est caché pendant le vote, pour ne pas influencer la salle.', "Pour le montrer : l'interrupteur « Score et fautes en bandeau » de la bande jaune (ce vote seulement)."] },
   { ch: 4, t: 'Le résultat', x: ["Les cartons sont levés, l'arbitre tranche.", "Cliquez sur l'équipe qui remporte le vote, ou sur Égalité."], tg: '#vg-res', ex: 'result', demo: 'b', ds: '[data-a=result][data-v=b]', foc: '#r-work',
-    do: v => { const from = Object.assign({}, S.score); if (v !== 'b') S.score.a++; if (v !== 'a') S.score.b++; const to = Object.assign({}, S.score); S.result = v; live('r1'); S.air = { k: 'point', res: v, from, to, card: snap() }; prep('t1', { k: 'board', res: v, from, to }); },
-    af: ['Un seul clic a compté le point et projeté le résultat.', "Pas besoin de Projeter ici."] },
-  { ch: 4, t: 'Le score', x: ["Le tableau des scores est en préparation.", "La bande indique « ancien score → nouveau score » : un vote mal compté se corrige ici, avant de projeter.", "Projetez le tableau : les volets tournent."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('t1'); S.air = S.prep; addImpro(2, 't1'); S.skip = true; prep('c2', { k: 'impro', n: 2, card: newCard() }); }, af: ['Une nouvelle carte est déjà prête.', 'La boucle recommence : carte, vote, résultat, score.'] },
+    // Étape Résultat+Score : le point seul, puis le tableau des scores s'enchaîne au bout de 4 s.
+    do: v => { const from = Object.assign({}, S.score); if (v !== 'b') S.score.a++; if (v !== 'a') S.score.b++; const to = Object.assign({}, S.score); S.result = v; live('r1');
+      const board = { k: 'board', res: v, from, to };
+      S.air = quiet ? board : { k: 'point', res: v, card: snap() }; S.chain = quiet ? null : board;
+      if (!quiet) later(() => { if (S.chain) { S.air = S.chain; S.chain = null; render(); } }, 4000);
+      addImpro(2, 'r1'); S.skip = true; prep('c2', { k: 'impro', n: 2, card: newCard() }); },
+    lv: () => { if (S.chain) { S.air = S.chain; S.chain = null; } },
+    af: ['Un seul clic a compté le point et projeté le résultat, sans Projeter.', 'Quatre secondes plus tard, le tableau des scores s\'enchaîne tout seul : les volets tournent. Projeter le fait arriver sans attendre.', 'La carte de l\'impro 2 est déjà prête : la boucle recommence.'] },
   { ch: 5, t: 'Le chrono de la période', x: ['Lancez le chrono de la période, dans la carte du haut.', 'Pour la visite, le temps passe en accéléré.'], tg: '[data-a=clock]', ex: 'clock', foc: '#r-clock', wait: 2500,
     do: () => { S.run = true; S.remain = 900; S.alert = true; S.banner = true; } },
   { ch: 5, t: "L'alerte des 15 minutes", x: ["À 15 minutes de la fin, le chrono passe au jaune.", "La <b>sirène sonne toute seule</b> : pas besoin d'y toucher.", "Un bandeau prévient la salle pendant 10 secondes.", "Cliquez sur l'alerte pour l'effacer."], tg: '[data-a=alert]', ex: 'alert', foc: '#r-clock',
@@ -878,7 +877,7 @@ const STEPS = [
   { ch: 5, t: 'Fin de la période', x: ["La période se termine : il n'y a plus d'impro à jouer.", "Dans la carte vide de l'impro 2, cliquez sur <b>Pas d'autre impro</b>."], tg: '[data-a=skip]', ex: 'skip', foc: '#r-work',
     do: () => { S.seqs = S.seqs.filter(q => !/^[icfvrt]2$/.test(q.id)); S.skip = false; S.notice = ''; prep('ent', { k: 'inter', sc: Object.assign({}, S.score) }); } },
   { ch: 5, t: "Projeter l'entracte", x: ["L'entracte est en préparation, avec le score à la mi-temps.", "Projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: ["Au retour, la 2e période se déroule comme la 1re : carte, fautes, vote, résultat, score."] },
+    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: ["Au retour, la 2e période se déroule comme la 1re : carte, fautes, vote, résultat et score."] },
   { ch: 5, t: 'La 2e période', info: 1, foc: '#r-prev', x: [
       "Passons directement à la fin de soirée.",
       "La 2e période est jouée : les Hiboux mènent 5 à 3.",
