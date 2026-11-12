@@ -1,0 +1,975 @@
+<meta charset="utf-8">
+<title>Visite guidée d'ImproMatch</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&display=swap">
+<style>
+/* Mise en page : une colonne « coach » (une consigne à la fois) et une copie du board sur laquelle on agit.
+   Un seul aspect, sombre, comme l'app. La copie du board suit l'app réelle (captures du 11 novembre 2026) :
+   quand le board change, cette copie doit suivre. */
+:root {
+  color-scheme: dark;
+  --bg: #0E1116; --panel: #151922; --line: #3A4150; --fg: #F4F5F7; --soft: #C9CED8;
+  --accent: #FFD479; --ink: #0E1116; --live: #FF5A5F; --ok: #3DDC84; --mac: #0A817C;
+  --win: #1B1B1F; --side: #28272E; --ctl: rgba(255,255,255,.1); --hair: rgba(255,255,255,.09); --dim: #9A9BA3;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--ui);
+  display: flex; flex-direction: column; overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Progression */
+.vg-prog { display: flex; gap: 6px; padding-block: 12px 10px; align-items: flex-end; }
+.vg-prog button { flex: 1; min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
+.vg-prog span { display: block; font: 600 13px var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--soft); opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+.vg-prog i { display: block; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.vg-prog i b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+.vg-prog .cur span { opacity: 1; color: var(--accent); }
+.vg-prog .past span { opacity: .9; }
+
+.vg-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(270px, 330px) minmax(0, 1fr); gap: 20px; padding-bottom: 14px; }
+
+/* Coach */
+.vg-coach { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: 8px; overflow-y: auto; }
+.vg-eye { margin: 0; font: 600 15px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.vg-coach h1 { margin: 0; font: 800 36px/1 var(--display); text-transform: uppercase; text-wrap: balance; }
+.vg-coach p { margin: 0; max-width: 34em; }
+.vg-keys { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; color: var(--soft); font-size: 13px; }
+.vg-ok { display: flex; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; animation: vg-up .45s cubic-bezier(.2,.8,.2,1) both; }
+.vg-ok::before { content: "✓"; color: var(--ok); font-weight: 700; }
+.vg-anim > * { animation: vg-up .45s cubic-bezier(.2,.8,.2,1) both; }
+.vg-anim > :nth-child(2) { animation-delay: .04s; } .vg-anim > :nth-child(3) { animation-delay: .08s; } .vg-anim > :nth-child(4) { animation-delay: .12s; }
+@keyframes vg-up { from { opacity: 0; transform: translateY(10px); } }
+.vg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.vg-chips button, .vg-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 14px; }
+.vg-short { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin: 0; }
+.vg-short dt { justify-self: start; } .vg-short dd { margin: 0; color: var(--soft); }
+.vg-nav { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
+.vg-nav button { white-space: nowrap; border-radius: 10px; border: 1px solid var(--line); background: transparent; padding: 9px 14px; font-weight: 600; }
+.vg-nav .go { background: var(--accent); color: var(--ink); border-color: var(--accent); flex: 1; }
+.vg-nav .go:disabled { background: transparent; color: var(--soft); border-color: var(--line); opacity: .5; cursor: default; }
+.vg-nav .go.pulse { animation: vg-pulse 1.2s ease-in-out infinite; }
+@keyframes vg-pulse { 50% { box-shadow: 0 0 0 6px rgba(255,212,121,.25); } }
+
+/* Liste des étapes du chapitre : l'étape en cours est dépliée */
+.vg-steps { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.vg-steps > li { border: 1px solid transparent; border-radius: 12px; }
+.vg-steps > li > button { display: flex; gap: 10px; align-items: center; width: 100%; background: none; border: 0; padding: 6px 8px; border-radius: 10px; text-align: left; color: var(--soft); font-size: 14.5px; }
+.vg-steps > li > button:hover { background: var(--panel); }
+.vg-steps .n { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font-size: 12px; font-weight: 700; box-sizing: border-box; }
+.vg-steps .done .n { background: var(--ok); border-color: var(--ok); color: var(--ink); }
+.vg-steps .todo > button { opacity: .6; }
+.vg-steps .cur { background: var(--panel); border-color: var(--line); }
+.vg-steps .cur > button { color: var(--fg); font-weight: 700; } .vg-steps .cur > button:hover { background: none; }
+.vg-steps .cur .n { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.vg-body { padding: 0 12px 12px 40px; display: flex; flex-direction: column; gap: 10px; animation: vg-up .4s cubic-bezier(.2,.8,.2,1) both; }
+.vg-hint { display: flex; gap: 8px; align-items: flex-start; color: var(--accent); font-size: 13.5px; margin: 0; } .vg-hint svg { margin-top: 3px; }
+.vg-hint.ok { color: var(--ok); }
+.vg-nav .back { flex: none; }
+
+/* Scène : la copie du board, à taille fixe, mise à l'échelle par la « caméra » */
+.vg-view { position: relative; overflow: hidden; min-width: 0; border-radius: 14px; background: #07090C; border: 1px solid var(--hair); }
+.vg-stage { position: absolute; left: 0; top: 0; width: 1240px; height: 880px; transform-origin: 0 0; transition: transform .7s cubic-bezier(.2,.8,.2,1); font: 13px/1.3 var(--ui); color: #ECECEE; }
+.vg-stage svg { flex: none; display: block; }
+.vg-scroll { overflow-y: auto; scrollbar-width: none; } .vg-scroll::-webkit-scrollbar { display: none; }
+.vg-win { position: absolute; inset: 0; background: var(--win); display: flex; border-radius: 12px; overflow: hidden; }
+.lights { display: flex; gap: 8px; align-items: center; } .lights i { width: 12px; height: 12px; border-radius: 50%; }
+.lights i:nth-child(1) { background: #FF5F57; } .lights i:nth-child(2) { background: #FEBC2E; } .lights i:nth-child(3) { background: #28C840; }
+.glass { border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.07); border-radius: 99px; height: 34px; min-width: 34px; padding: 0 9px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; color: #E4E4E8; }
+.glass:hover { background: rgba(255,255,255,.14); }
+/* Déroulé : panneau flottant, sur toute la hauteur */
+.vg-side { width: 220px; flex: none; margin: 6px; border-radius: 14px; background: var(--side); border: 1px solid var(--hair); display: flex; flex-direction: column; }
+.vg-side .top { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 14px; flex: none; }
+.vg-side h4 { margin: 2px 14px 4px; font-size: 11.5px; color: var(--dim); font-weight: 600; }
+#r-list { flex: 1; min-height: 0; padding: 0 8px 8px; }
+.row { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 13px; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,.05); }
+.row.ind { padding-left: 34px; } .row.per { font-weight: 600; margin-top: 3px; } .row.sel { background: rgba(255,255,255,.13); }
+.row.hd { font-weight: 600; padding-left: 20px; overflow: hidden; } .row.hd span { overflow: hidden; text-overflow: ellipsis; }
+.row.grp { font-weight: 600; padding-left: 4px; gap: 7px; } .row.grp small { margin-left: auto; font-size: 11px; color: var(--dim); font-weight: 400; } .row.grp .chev { color: var(--dim); }
+.gbody .row { padding-left: 24px; } .gbody .row.ind { padding-left: 38px; } .gbody .row.hd { padding-left: 22px; } .gbody .addrow { margin-left: 24px; width: calc(100% - 30px); }
+.row em { margin-left: auto; font: 700 10.5px var(--ui); color: var(--live); font-style: normal; }
+.st { width: 14px; height: 14px; flex: none; display: grid; place-items: center; }
+.st.pend::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.3px solid #A7A8AF; box-sizing: border-box; }
+.st.live::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--live); animation: vg-blink 1.4s ease-in-out infinite; }
+.st.done { color: var(--ok); }
+@keyframes vg-blink { 50% { opacity: .45; } }
+.addrow { display: flex; align-items: center; gap: 8px; width: calc(100% - 26px); margin: 3px 6px 3px 20px; height: 28px; border: 1px dashed #6F7079; border-radius: 7px; background: none; font-size: 13px; color: var(--dim); padding: 0 12px; white-space: nowrap; }
+.addrow svg { color: var(--mac); }
+.vg-side .foot { flex: none; border-top: 1px solid var(--hair); padding: 9px 10px; display: flex; justify-content: flex-end; }
+/* Colonne principale */
+.vg-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.vg-bar { height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 12px 0 8px; }
+.vg-bar .lights { margin: 0 6px 0 12px; }
+.vg-seg { display: flex; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.05); border-radius: 99px; padding: 3px; height: 36px; box-sizing: border-box; }
+.vg-seg button { border: 0; background: none; padding: 0 16px; border-radius: 99px; font-size: 13.5px; }
+.vg-seg .on { background: rgba(255,255,255,.14); }
+.vg-ttl { font-weight: 700; font-size: 13.5px; } .vg-ttl small { display: block; font-weight: 400; font-size: 11px; color: var(--dim); }
+.vg-tools { margin-left: auto; display: flex; gap: 8px; position: relative; }
+.b { border: 0; background: var(--ctl); border-radius: 6px; padding: 4px 9px; font-size: 12px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; height: 22px; box-sizing: border-box; }
+.b.pri { background: var(--mac); color: #fff; } .b:disabled { opacity: .4; }
+.vg-menu { position: absolute; z-index: 30; background: #2F3037; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 5px; box-shadow: 0 14px 40px rgba(0,0,0,.6); animation: vg-pop .18s ease-out both; }
+.vg-menu small { display: block; padding: 3px 10px; color: var(--dim); font-size: 11px; font-weight: 600; }
+.vg-menu button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 4px 10px; border-radius: 6px; font-size: 13px; white-space: nowrap; }
+.vg-menu button:hover { background: var(--mac); } .vg-menu button:disabled { opacity: .4; }
+.vg-menu hr { border: 0; border-top: 1px solid var(--hair); margin: 4px 8px; }
+@keyframes vg-pop { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
+.vg-menu.sortie { right: 132px; top: 40px; }
+.vg-center { flex: 1; min-height: 0; padding: 8px 20px 12px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+/* Carte des chronos */
+.clock { height: 80px; flex: none; display: flex; align-items: center; background: rgba(0,0,0,.28); border: 1px solid var(--hair); border-radius: 12px; padding: 0 16px; box-sizing: border-box; }
+.clock .z { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; } .clock .z > div { display: flex; gap: 5px; align-items: center; }
+.clock .lab { font-size: 12px; font-weight: 600; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clock .sep { width: 1px; height: 52px; background: var(--hair); margin: 0 12px; flex: none; }
+.clock .b { font-size: 11px; padding: 3px 7px; }
+#vg-clk { font: 700 27px var(--mono); width: 92px; } #vg-clk.warn { color: #FFD60A; } #vg-clk.crit { color: var(--live); }
+.ic2 { font: 600 20px var(--mono); width: 140px; white-space: nowrap; }
+.alert { background: #FFD60A !important; color: #000; font-weight: 600; animation: vg-pop .25s ease-out both; }
+.scz { width: 220px; flex: none; display: flex; flex-direction: column; gap: 5px; }
+.scz div { display: flex; align-items: center; gap: 8px; } .scz .nm { flex: 1; font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+.scz .d { display: flex; gap: 3px; } .scz .d i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.22); } .scz .d i.on { background: #FFD60A; }
+.scz .n { font: 700 20px ui-rounded, var(--ui); width: 28px; text-align: center; font-variant-numeric: tabular-nums; display: inline-block; }
+.scz .n.bump { animation: vg-bump .6s cubic-bezier(.2,.8,.2,1); }
+@keyframes vg-bump { 30% { transform: scale(1.7); color: var(--accent); } }
+.scz .pm { color: var(--dim); } .hist { color: var(--dim); margin-left: 10px; }
+/* Aperçus */
+.prev { display: flex; align-items: center; gap: 10px; flex: none; }
+.pv { flex: 1; min-width: 0; } .pv h5 { margin: 0 0 6px; font-size: 14px; font-weight: 700; height: 18px; display: flex; gap: 8px; align-items: center; }
+.pv h5 span { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+.pvs { position: relative; width: 440px; height: 248px; overflow: hidden; background: #0A1A2C; border-radius: 4px; --ps: .34375; }
+.pvf { position: absolute; inset: 0; border-radius: 4px; pointer-events: none; z-index: 5; }
+.pv.prep .pvf { border: 2px dashed #FFD60A; } .pv.air .pvf { border: 2px solid var(--live); }
+.pv.air.flash .pvf { animation: vg-flash .7s ease-out; }
+@keyframes vg-flash { 0% { box-shadow: 0 0 0 0 rgba(255,90,95,.9), inset 0 0 40px rgba(255,90,95,.6); } 100% { box-shadow: 0 0 0 16px rgba(255,90,95,0); } }
+.blk { position: absolute; inset: 0; background: #0B0D11; z-index: 4; opacity: 0; transition: opacity .6s; pointer-events: none; } .blk.on { opacity: 1; }
+.pcol { width: 64px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; padding-top: 20px; }
+.pcol b { font-weight: 600; }
+.pcol .go { width: 52px; height: 52px; border-radius: 50%; border: 0; background: rgba(255,255,255,.13); color: #fff; display: grid; place-items: center; }
+.pcol .go:disabled { opacity: .35; }
+.pcol .go.fire { animation: vg-fire .5s ease-out; } @keyframes vg-fire { 40% { transform: scale(1.25); box-shadow: 0 0 0 10px rgba(10,129,124,.3); } }
+.pcol .nb { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--ctl); margin-top: 10px; display: grid; place-items: center; }
+.pcol small { color: var(--dim); font-size: 10px; }
+/* Centre : outils de l'étape */
+.work { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+.work > * { flex: none; }
+.rail { display: flex; align-items: center; gap: 8px; font-size: 14px; } .rail b { margin-right: 6px; }
+.rail span { padding: 4px 12px; border-radius: 99px; border: 1px solid #77787F; display: inline-flex; gap: 6px; align-items: center; }
+.rail span.opt { border-style: dashed; } .rail span.on { border-color: var(--mac); background: rgba(10,129,124,.3); } .rail u { color: #77787F; text-decoration: none; display: flex; }
+.rail .st.live::before { width: 9px; height: 9px; }
+.hl { margin: 0; font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; padding-left: 12px; } .h2 { margin: 0; font-size: 17px; font-weight: 700; }
+.box { background: rgba(255,255,255,.045); border-radius: 10px; padding: 10px 12px; }
+.muted { color: var(--dim); }
+.sum { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.055); border-radius: 10px; padding: 10px 12px; } .sum div { flex: 1; min-width: 0; } .sum b { font-size: 15.5px; font-weight: 600; display: block; margin-bottom: 3px; }
+.b.lg { height: 26px; padding: 0 11px; font-size: 13px; gap: 7px; }
+.grp { width: 700px; align-self: center; background: rgba(255,255,255,.045); border-radius: 10px; padding: 0 10px; box-sizing: border-box; }
+.grp > div { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--hair); } .grp > div:first-child { border-top: 0; }
+.grp .r { display: flex; align-items: center; gap: 8px; } .grp .quick { justify-content: flex-end; border-top: 0; min-height: 30px; padding-bottom: 6px; }
+#vg-title { flex: 1; background: none; border: 0; color: inherit; font: inherit; text-align: right; padding: 4px 0; outline: none; caret-color: var(--mac); } #vg-title::placeholder { color: #77787F; }
+.seg2 { display: flex; border-radius: 6px; overflow: hidden; background: var(--ctl); } .seg2 span { padding: 3px 14px; } .seg2 .on { background: var(--mac); }
+.pm2 { width: 46px; height: 22px; border-radius: 6px; background: var(--ctl); display: grid; place-items: center; color: var(--soft); } .pm2.off { opacity: .35; }
+.val { width: 64px; text-align: center; font: 600 14px ui-rounded, var(--ui); color: var(--soft); }
+.b.q { height: 22px; padding: 0 10px; } .b.q.on { color: var(--mac); }
+.cb { width: 14px; height: 14px; border-radius: 4px; background: var(--mac); display: inline-grid; place-items: center; font-size: 10px; } .cb.off { background: rgba(255,255,255,.14); }
+.plays { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; } .plays > div { display: grid; gap: 4px; align-content: start; } .plays h6 { margin: 0 0 2px; font-size: 13px; display: flex; justify-content: space-between; gap: 6px; } .plays h6 small { font-weight: 400; color: var(--dim); font-size: 11.5px; }
+.plb { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 2px 0; text-align: left; font-size: 13px; border-radius: 6px; } .plb:disabled { cursor: default; } .plb:not(:disabled):hover { background: rgba(255,255,255,.06); }
+.plays u { text-decoration: none; font-size: 9.5px; font-weight: 700; background: rgba(255,255,255,.16); border-radius: 99px; padding: 0 5px; }
+.fouls { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; position: relative; } .fouls h6 { font-size: 13.5px; font-weight: 700; margin: 0 0 6px; display: flex; align-items: center; justify-content: space-between; min-height: 22px; }
+.fouls .l { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+.fb { border: 0; background: var(--ctl); border-radius: 6px; height: 24px; padding: 0 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.pfoul { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.07); border-radius: 6px; padding: 4px 8px; margin-bottom: 4px; } .pfoul i { width: 10px; height: 10px; border-radius: 50%; } .pfoul span { flex: 1; }
+.fouls ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; } .fouls li { display: flex; gap: 8px; align-items: center; } .fouls li i { width: 9px; height: 9px; border-radius: 50%; } .fouls li b { color: #FFD60A; font-size: 11px; }
+.vg-menu.types { left: 0; top: 58px; min-width: 210px; }
+.res { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.res button { border: 0; border-radius: 8px; height: 56px; font-size: 16px; font-weight: 600; color: #fff; transition: transform .15s, filter .15s; filter: saturate(.8) brightness(.82); } .res button:hover { transform: translateY(-2px); filter: none; }
+.tog { display: flex; gap: 12px; align-items: center; justify-content: space-between; } .tog i { width: 36px; height: 20px; border-radius: 10px; background: #55565E; position: relative; flex: none; } .tog i::after { content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.toast { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); background: #F4F5F7; color: #0E1116; font-weight: 600; padding: 8px 16px; border-radius: 99px; z-index: 40; animation: vg-up .3s ease-out both; white-space: nowrap; }
+
+/* Centre du board : fil d'étapes, puis trois tuiles fixes (Carte · étape en préparation · Joueurs en jeu) */
+:root { --tq: #0A817C; }
+.work > .tiles { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.tile { background: rgba(0,0,0,.16); border: 1px solid var(--hair); border-radius: 12px; padding: 12px 14px; box-sizing: border-box; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 9px; }
+.tile.act { background: rgba(0,0,0,.28); border: 2px solid var(--tq); padding: 11px 13px; }
+.tile.off > :not(h3) { opacity: .45; }
+.tile h3 { margin: 0; font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex: none; } .tile h3 small { font-size: 11px; font-weight: 600; color: var(--dim); margin-left: auto; }
+.tile h3 small.live { color: var(--live); } .tile h3 small.ok { color: var(--ok); }
+.tile p { margin: 0; }
+.nbn { display: flex; align-items: center; gap: 12px; border: 1px dashed #FFD60A; border-radius: 8px; padding: 7px 12px; flex: none; }
+.nbn > div { flex: 1; min-width: 0; } .nbn small { display: block; font-size: 11px; color: var(--dim); } .nbn b { color: #FFD60A; font-size: 14px; font-weight: 700; }
+.nbn em { font: 11.5px var(--ui); color: var(--dim); font-style: normal; text-align: right; max-width: 42%; }
+.nbn.col { flex-direction: column; align-items: flex-start; gap: 4px; } .nbn.col em { max-width: none; text-align: left; }
+.nbn .tog { gap: 8px; font-size: 11.5px; }
+.frm { display: flex; flex-direction: column; }
+.frm > div { display: grid; grid-template-columns: 76px 1fr; align-items: center; min-height: 32px; border-top: 1px solid var(--hair); } .frm > div:first-child { border-top: 0; }
+.frm .lb { color: var(--dim); } .frm .v { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.frm > .quick { display: flex; gap: 4px; flex-wrap: wrap; padding: 2px 0 4px 76px; min-height: 0; border-top: 0; } .frm > .quick .b.q { padding: 0 7px; height: 22px; }
+.frm #vg-title { text-align: left; flex: 1; min-width: 0; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0; font-size: 13px; } .kv dt { color: var(--dim); } .kv dd { margin: 0; min-width: 0; }
+.big { font: 700 30px var(--mono); display: flex; align-items: center; gap: 14px; } .big span.m { color: var(--dim); }
+.corr { display: flex; gap: 8px; }
+
+.res button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.2; } .res button small { font-size: 13px; font-weight: 600; } .res button span { font-size: 18px; font-weight: 700; }
+/* Fiche en tuiles */
+.sg { display: grid; gap: 12px; width: 100%; } .sg > .tile { gap: 0; } .sg .frm > div { min-height: 34px; grid-template-columns: 92px 1fr; }
+.sg .tile h3 { margin-bottom: 6px; }
+.tile.team { border-top: 4px solid var(--tc); } .tile.team .frm > div { grid-template-columns: 70px 1fr; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chp { display: inline-flex; gap: 6px; align-items: center; border-radius: 99px; background: var(--ctl); padding: 3px 6px 3px 12px; font-size: 13px; } .chp.dash { border: 1px dashed #8E8E93; background: none; font-style: italic; padding-right: 12px; } .chp.add { border: 1px dashed #77787F; background: none; color: var(--dim); padding: 3px 12px; }
+.shead .seg2 span { cursor: pointer; }
+.stp { display: inline-flex; align-items: center; gap: 6px; } .stp .val { width: 56px; }
+.a4 { width: 150px; height: 212px; border: 2px dashed #6F7079; border-radius: 6px; display: grid; place-items: center; color: var(--dim); font-weight: 600; letter-spacing: .1em; }
+/* Schéma animé « on prépare, puis on projette » */
+#vg-schema { position: absolute; inset: 0; z-index: 25; } #vg-schema:empty { display: none; }
+.sch { position: absolute; inset: 0; background: #0B0D11; display: flex; flex-direction: column; padding: 44px 60px 40px; gap: 26px; animation: vg-fade .35s both; font-family: var(--ui); }
+.sch h2 { margin: 0; font: 800 54px/1 var(--display); text-transform: uppercase; } .sch h2 span { color: var(--accent); }
+.sch .row2 { display: flex; align-items: center; gap: 0; }
+.sch .col { flex: none; width: 440px; display: flex; flex-direction: column; gap: 12px; }
+.sch .col h4 { margin: 0; font: 800 34px var(--display); letter-spacing: .06em; text-transform: uppercase; display: flex; gap: 12px; align-items: baseline; } .sch .col h4 small { font: 500 21px var(--ui); letter-spacing: 0; color: var(--soft); text-transform: none; }
+.sch .scr2 { position: relative; height: 248px; border-radius: 10px; background: #000; display: grid; place-items: center; text-align: center; font: 800 46px/1.05 var(--display); text-transform: uppercase; padding: 0 20px; box-sizing: border-box; overflow: hidden; }
+.sch .prep .scr2 { border: 3px dashed #FFD60A; } .sch .air .scr2 { border: 3px solid var(--live); } .sch .air .scr2.dark { border-color: #444; color: #666; }
+.sch .scr2 > b { animation: vg-up .5s both; display: block; }
+.sch .mid { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; padding-top: 34px; }
+.sch .go2 { width: 96px; height: 96px; border-radius: 50%; background: var(--mac); display: grid; place-items: center; color: #fff; } .sch .go2.fire { animation: vg-fire .6s ease-out 2; }
+.sch .mid b { font-size: 24px; } .sch .mid small { font-size: 18px; color: var(--soft); }
+.sch .ghost { position: absolute; left: 130px; top: 210px; width: 300px; height: 168px; border-radius: 8px; border: 3px dashed #FFD60A; background: rgba(255,214,10,.14); display: grid; place-items: center; font: 800 32px var(--display); text-transform: uppercase; animation: sch-fly 1.5s .35s cubic-bezier(.5,0,.2,1) both; z-index: 3; }
+@keyframes sch-fly { 0% { transform: translateX(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(680px); opacity: 0; border-color: var(--live); } }
+.sch .cap { font: 500 34px/1.25 var(--ui); min-height: 86px; color: var(--fg); text-wrap: balance; } .sch .cap b { color: var(--accent); }
+.sch .strip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 20px; }
+.sch .strip span { padding: 6px 16px; border-radius: 99px; border: 1px solid var(--line); color: var(--soft); } .sch .strip span.p { border: 1px dashed #FFD60A; color: #FFD60A; } .sch .strip span.a { border-color: var(--live); color: var(--fg); background: rgba(255,90,95,.2); } .sch .strip span.d { opacity: .55; }
+.sch .foot { display: flex; gap: 14px; align-items: center; margin-top: auto; font-size: 20px; color: var(--soft); }
+.sch .foot i { display: inline-block; padding: 7px 16px; border: 1px solid var(--line); border-radius: 12px; font-style: normal; background: var(--panel); }
+.sch .dots { margin-left: auto; display: flex; gap: 10px; } .sch .dots button { width: 18px; height: 18px; border-radius: 50%; border: 0; padding: 0; background: var(--line); } .sch .dots button.on { background: var(--accent); }
+.sch .tag { position: absolute; top: 12px; right: 12px; font: 700 20px var(--ui); padding: 3px 12px; border-radius: 99px; background: #FFD60A; color: #000; }
+
+
+/* Champs, menus et boutons comme dans l'app */
+.fld { flex: 1; min-width: 0; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.13); border-radius: 6px; padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fld.ph { color: #77787F; }
+.pop { display: inline-flex; align-items: center; gap: 10px; background: rgba(255,255,255,.1); border-radius: 6px; padding: 3px 6px 3px 10px; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; gap: 7px; background: rgba(255,255,255,.1); border: 0; border-radius: 6px; padding: 4px 11px; font-size: 13px; white-space: nowrap; }
+.btn:disabled { opacity: .45; }
+.cap { font-size: 11.5px; color: var(--dim); }
+.notice { align-self: flex-start; display: inline-flex; gap: 8px; align-items: center; background: rgba(255,214,10,.2); border-radius: 6px; padding: 7px 10px; font-size: 13px; }
+.sld { flex: 1; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #8E8E93 78%, rgba(255,255,255,.18) 78%); position: relative; } .sld::after { content: ""; position: absolute; left: 78%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #fff; }
+.sw2 { width: 30px; height: 18px; border-radius: 9px; background: rgba(255,255,255,.2); position: relative; flex: none; } .sw2::after { content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; } .sw2.on { background: var(--mac); } .sw2.on::after { left: 14px; }
+/* Fiche du match */
+.shead { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--hair); position: relative; }
+.shead .seg2 { position: absolute; left: 50%; transform: translateX(-50%); } .shead .seg2 span { padding: 4px 22px; }
+#r-sheet { flex: 1; min-height: 0; padding: 14px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+.warnl { color: #FFD60A; display: flex; gap: 8px; align-items: center; animation: vg-up .3s both; }
+.sw { display: flex; gap: 8px; } .sw button { width: 20px; height: 20px; border-radius: 50%; border: 0; padding: 0; transition: transform .15s; } .sw button:hover { transform: scale(1.2); } .sw button.on { box-shadow: 0 0 0 2px var(--side), 0 0 0 4px #fff; }
+.logo { width: 44px; height: 44px; border-radius: 8px; background: var(--ctl); }
+/* Repères de l'étape « tour des zones » */
+.zone { position: absolute; z-index: 20; border: 2px solid var(--accent); border-radius: 12px; pointer-events: none; animation: vg-zone .5s cubic-bezier(.2,.8,.2,1) both; }
+.zone b { position: absolute; left: 10px; top: 10px; background: var(--accent); color: var(--ink); font: 800 22px var(--display); text-transform: uppercase; letter-spacing: .04em; padding: 2px 10px; border-radius: 6px; white-space: nowrap; }
+@keyframes vg-zone { from { opacity: 0; transform: scale(1.06); } }
+/* Anneau, curseur de démonstration */
+.vg-ring { position: fixed; z-index: 50; pointer-events: none; border: 2px solid var(--accent); border-radius: 12px; box-shadow: 0 0 0 4px rgba(255,212,121,.2); animation: vg-ringp 1.5s ease-in-out infinite; }
+@keyframes vg-ringp { 50% { box-shadow: 0 0 0 10px rgba(255,212,121,.08), 0 0 24px rgba(255,212,121,.5); } }
+.vg-ring.no { animation: vg-shake .35s; } @keyframes vg-shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.vg-ghost { position: fixed; z-index: 60; pointer-events: none; width: 22px; height: 22px; transition: left .65s cubic-bezier(.3,.7,.2,1), top .65s cubic-bezier(.3,.7,.2,1); filter: drop-shadow(0 2px 4px #000); }
+.vg-ghost.tap { animation: vg-tap .3s ease-out; } @keyframes vg-tap { 50% { transform: scale(.75); } }
+.vg-bravo { position: absolute; inset: 0; z-index: 45; display: grid; place-items: center; background: rgba(7,9,12,.78); animation: vg-fade .4s both; }
+@keyframes vg-fade { from { opacity: 0; } }
+.vg-bravo div { display: flex; gap: 8px; perspective: 600px; }
+.vg-bravo span { font: 800 clamp(48px, 9vw, 120px)/1.15 var(--display); width: .72em; text-align: center; color: var(--fg); background: linear-gradient(#2A2F39 0 50%, #23272F 50%); border-radius: .08em; box-shadow: inset 0 -.04em 0 var(--accent); transform-origin: 50% 0; animation: vg-flap .5s cubic-bezier(.3,.6,.3,1.3) both; }
+@keyframes vg-flap { from { transform: rotateX(-95deg); opacity: 0; } }
+
+/* Écrans projetés : repère 1280 × 720, Barlow Condensed, rien sous 40 px */
+.scr { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform: scale(var(--ps)); transform-origin: 0 0; background: #0A1A2C; color: var(--fg); font: 800 56px/1.05 var(--display); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+.scr.in { animation: scr-in .5s cubic-bezier(.2,.8,.2,1) both; } .scr.out { animation: scr-out .45s both; }
+@keyframes scr-in { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0); } }
+@keyframes scr-out { to { opacity: 0; } }
+.scr .s6 { font-weight: 600; } .scr .sec { color: #E8EBF0; } .scr .acc { color: var(--accent); }
+.scr .g { display: flex; align-items: center; justify-content: center; }
+.scr .poster { background: var(--panel); align-self: stretch; display: grid; place-items: center; }
+.scr .poster div { width: 440px; height: 622px; border: 3px dashed var(--line); border-radius: 8px; display: grid; place-items: center; font: 600 40px var(--display); letter-spacing: .1em; color: #E8EBF0; }
+.scr .chip { display: inline-flex; align-items: center; gap: 14px; font-size: 56px; padding: 10px 28px; border-radius: 99px; background: var(--panel); border: 2px solid #2A3140; white-space: nowrap; }
+.scr .chip svg { width: 46px; height: 46px; color: var(--accent); }
+.scr .nat { font-size: 44px; letter-spacing: .1em; background: var(--fg); color: var(--ink); border-radius: 8px; padding: 4px 20px; }
+.scr .fdots { display: flex; gap: 12px; } .scr .fdots i { width: 44px; height: 44px; border-radius: 50%; border: 4px solid var(--accent); box-sizing: border-box; } .scr .fdots i.on { background: var(--accent); }
+.scr .fdots.sm i { width: 34px; height: 34px; border-color: #C9CED8; } .scr .fdots.xs i { width: 30px; height: 30px; }
+.scr .hw { flex: 1; background: var(--panel); border-radius: 16px; padding: 36px 20px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.scr .hw > :first-child { height: 80px; display: flex; align-items: center; gap: 8px; }
+.scr .vc { width: 250px; height: 250px; border-radius: 16px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 24px; box-sizing: border-box; font-size: 52px; color: var(--ink); animation: vc .7s cubic-bezier(.3,.6,.3,1.4) both; }
+@keyframes vc { from { transform: translateY(140px) rotate(0); opacity: 0; } }
+.scr .rise > * { animation: rise .55s cubic-bezier(.2,.8,.2,1) both; } .scr .rise > :nth-child(2) { animation-delay: .08s; } .scr .rise > :nth-child(3) { animation-delay: .16s; } .scr .rise > :nth-child(4) { animation-delay: .24s; } .scr .rise > :nth-child(5) { animation-delay: .32s; }
+@keyframes rise { from { opacity: 0; transform: translateY(40px); } }
+.scr .ban { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); color: var(--ink); padding: 14px 0 20px; animation: ban .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes ban { from { transform: translateY(100%); } }
+.scr .pill { gap: 24px; font-size: 60px; background: var(--bg); color: var(--fg); border-radius: 12px; padding: 10px 36px; margin-top: 16px; }
+/* Volets */
+.fd { position: relative; display: inline-block; width: .74em; height: 1.2em; line-height: 1.2em; perspective: 400px; vertical-align: middle; margin: 0 .03em; }
+.fd b { position: absolute; left: 0; right: 0; height: 50%; overflow: hidden; font-weight: 800; backface-visibility: hidden; }
+.fd b i { display: block; font-style: normal; height: 1.2em; text-align: center; }
+.fd .t1, .fd .t2 { top: 0; background: #2A2F39; border-radius: .08em .08em 0 0; } .fd .b1, .fd .b2 { bottom: 0; background: #23272F; border-radius: 0 0 .08em .08em; }
+.fd .b1 i, .fd .b2 i { margin-top: -.6em; }
+.fd::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px; background: var(--bg); z-index: 3; }
+.fd .t2 { transform-origin: 50% 100%; animation: ft .3s var(--fdl, .7s) ease-in both; z-index: 2; } .fd .b2 { transform-origin: 50% 0; animation: fb .3s calc(var(--fdl, .7s) + .3s) ease-out both; z-index: 2; }
+@keyframes ft { to { transform: rotateX(-90deg); } } @keyframes fb { from { transform: rotateX(90deg); } }
+
+@media (max-width: 760px) {
+  .vg-main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 12px; }
+  .vg-view { order: -1; } .vg-coach { max-height: 46vh; padding-top: 0; gap: 9px; } .vg-coach h1 { font-size: 30px; }
+  .vg-prog span { display: none; } .vg-prog { gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<nav class="vg-prog" id="vg-prog" aria-label="Étapes de la visite"></nav>
+<div class="vg-main">
+  <aside class="vg-coach" aria-live="polite">
+    <div id="vg-copy" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="vg-nav">
+      <button id="vg-back" type="button" class="back">← Précédent</button>
+      <button id="vg-next" type="button" class="go">Suivant →</button>
+    </div>
+  </aside>
+  <div class="vg-view" id="vg-view">
+    <div class="vg-stage" id="vg-stage">
+      <div class="vg-win">
+        <div class="vg-side" id="vg-side">
+          <div class="top"><span class="lights"><i></i><i></i><i></i></span><span class="glass" id="vg-sbt"></span></div>
+          <h4>Déroulé du match</h4>
+          <div class="vg-scroll" id="r-list"></div>
+          <div class="foot" id="r-foot"></div>
+        </div>
+        <div class="vg-col">
+          <div class="vg-bar" id="r-bar"></div>
+          <div class="vg-center" id="vg-board">
+            <div class="clock" id="r-clock"></div>
+            <div class="prev" id="r-prev">
+              <div class="pv prep"><h5 id="h-prep">En préparation</h5><div class="pvs" id="s-prep"><div class="pvf"></div></div></div>
+              <div class="pcol" id="r-pcol"></div>
+              <div class="pv air" id="pv-air"><h5 id="h-air">À l'antenne</h5><div class="pvs" id="s-air"><div class="blk" id="vg-blk"></div><div class="pvf"></div></div></div>
+            </div>
+            <div class="work" id="r-work"></div>
+          </div>
+          <div class="shead" id="r-shead" hidden></div>
+          <div class="vg-scroll" id="r-sheet" hidden></div>
+        </div>
+      </div>
+      <div id="vg-zones"></div>
+      <div id="vg-schema"></div>
+      <div id="vg-toast"></div>
+    </div>
+    <div class="vg-bravo" id="vg-bravo" hidden></div>
+  </div>
+</div>
+<div class="vg-ring" id="vg-ring" hidden></div>
+<svg class="vg-ghost" id="vg-ghost" hidden viewBox="0 0 22 22"><path d="M3 2l15 8-6.5 1.8L9 18z" fill="#fff" stroke="#000" stroke-width="1.2"/></svg>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const up = s => esc(String(s).toLocaleUpperCase('fr'));
+const inApp = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.tour);
+const COLORS = { red: '#FF5A5F', orange: '#FF8A3D', yellow: '#F5D90A', green: '#3DDC84', turquoise: '#2EC4B6', blue: '#4C8DFF', indigo: '#6C63FF', violet: '#B26BFF', pink: '#FF6FB5', white: '#F2F4F8' };
+const CNAMES = { red: 'Rouge', orange: 'Orange', yellow: 'Jaune', green: 'Vert', turquoise: 'Turquoise', blue: 'Bleu', indigo: 'Indigo', violet: 'Violet', pink: 'Rose', white: 'Blanc' };
+const FOULS = ['Retard de jeu', 'Cabotinage', 'Rudesse', 'Refus de personnage', 'Obstruction', "Manque d'écoute", 'Non-respect de la catégorie', 'Confusion', "À clarifier par l'arbitre"];
+const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const close = (a, b) => { const x = rgb(COLORS[a]), y = rgb(COLORS[b]); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]) < 80; };
+// Comme l'app : minutes sans zéro devant (« 2:00 », « 45:00 »)
+const mmss = t => { t = Math.max(0, Math.round(t)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+// Icônes Iconoir de l'app (licence MIT), tracés repris du catalogue d'images
+const IC = {"bell-notification":"M18.1336 11C18.7155 16.3755 21 18 21 18H3C3 18 6 15.8667 6 8.4C6 6.70261 6.63214 5.07475 7.75736 3.87452C8.88258 2.67428 10.4087 2 12 2C12.3373 2 12.6717 2.0303 13 2.08949 M19 8C20.6569 8 22 6.65685 22 5C22 3.34315 20.6569 2 19 2C17.3431 2 16 3.34315 16 5C16 6.65685 17.3431 8 19 8Z M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21","bell":"M18 8.4C18 6.70261 17.3679 5.07475 16.2426 3.87452C15.1174 2.67428 13.5913 2 12 2C10.4087 2 8.88258 2.67428 7.75736 3.87452C6.63214 5.07475 6 6.70261 6 8.4C6 15.8667 3 18 3 18H21C21 18 18 15.8667 18 8.4Z M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21","align-bottom-box":"M4 8.00001L4.01 8.01112 M4 4.00001L4.01 4.01112 M8 4.00001L8.01 4.01112 M12 4.00001L12.01 4.01112 M16 4.00001L16.01 4.01112 M20 4.00001L20.01 4.01112 M20 8.00001L20.01 8.01112 M4 12V20H20V12H4Z","video-projector":"M4 19H6 M18 19H20 M2 16.4V7.6C2 7.26863 2.26863 7 2.6 7H21.4C21.7314 7 22 7.26863 22 7.6V16.4C22 16.7314 21.7314 17 21.4 17H2.6C2.26863 17 2 16.7314 2 16.4Z M5 10.01L5.01 9.99889 M8 10.01L8.01 9.99889 M11 10.01L11.01 9.99889 M5 14.01L5.01 13.9989 M8 14.01L8.01 13.9989 M11 14.01L11.01 13.9989 M17 14C18.1046 14 19 13.1046 19 12C19 10.8954 18.1046 10 17 10C15.8954 10 15 10.8954 15 12C15 13.1046 15.8954 14 17 14Z","timer":"M9 2L15 2 M12 10L12 14 M12 22C16.4183 22 20 18.4183 20 14C20 9.58172 16.4183 6 12 6C7.58172 6 4 9.58172 4 14C4 18.4183 7.58172 22 12 22Z","perspective-view":"M1 21L4.14286 3H19.8571L23 21H1Z M2 16.5H22 M3 12H21 M4 7.5H20 M12 3V21 M8 3.5L6.5 20.5 M16 3.5L17.5 20.5","play":"M6.90588 4.53682C6.50592 4.2998 6 4.58808 6 5.05299V18.947C6 19.4119 6.50592 19.7002 6.90588 19.4632L18.629 12.5162C19.0211 12.2838 19.0211 11.7162 18.629 11.4838L6.90588 4.53682Z","pause":"M6 18.4V5.6C6 5.26863 6.26863 5 6.6 5H9.4C9.73137 5 10 5.26863 10 5.6V18.4C10 18.7314 9.73137 19 9.4 19H6.6C6.26863 19 6 18.7314 6 18.4Z M14 18.4V5.6C14 5.26863 14.2686 5 14.6 5H17.4C17.7314 5 18 5.26863 18 5.6V18.4C18 18.7314 17.7314 19 17.4 19H14.6C14.2686 19 14 18.7314 14 18.4Z","refresh":"M21.8883 13.5C21.1645 18.3113 17.013 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C16.1006 2 19.6248 4.46819 21.1679 8 M17 8H21.4C21.7314 8 22 7.73137 22 7.4V3","clock-rotate-right":"M12 6L12 12L18 12 M21.8883 10.5C21.1645 5.68874 17.013 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C16.1006 22 19.6248 19.5318 21.1679 16 M17 16H21.4C21.7314 16 22 16.2686 22 16.6V21","page":"M4 21.4V2.6C4 2.26863 4.26863 2 4.6 2H16.2515C16.4106 2 16.5632 2.06321 16.6757 2.17574L19.8243 5.32426C19.9368 5.43679 20 5.5894 20 5.74853V21.4C20 21.7314 19.7314 22 19.4 22H4.6C4.26863 22 4 21.7314 4 21.4Z M8 10L16 10 M8 18L16 18 M8 14L12 14 M16 2V5.4C16 5.73137 16.2686 6 16.6 6H20","triangle-flag":"M8 21L8 16M8 16V3.57709C8 3.10699 8.5161 2.81949 8.91581 3.06693L17.7061 8.50854C18.0775 8.73848 18.0866 9.2756 17.7231 9.51793L8 16Z","undo":"M4.5 8C8.5 8 11 8 15 8C15 8 15 8 15 8C15 8 20 8 20 12.7059C20 18 15 18 15 18C11.5714 18 9.71429 18 6.28571 18 M7.5 11.5C6.13317 10.1332 5.36683 9.36683 4 8C5.36683 6.63317 6.13317 5.86683 7.5 4.5","arrow-right":"M3 12L21 12M21 12L12.5 3.5M21 12L12.5 20.5","half-moon":"M3 11.5066C3 16.7497 7.25034 21 12.4934 21C16.2209 21 19.4466 18.8518 21 15.7259C12.4934 15.7259 8.27411 11.5066 8.27411 3C5.14821 4.55344 3 7.77915 3 11.5066Z","sun-light":"M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18Z M22 12L23 12 M12 2V1 M12 23V22 M20 20L19 19 M20 4L19 5 M4 20L5 19 M4 4L5 5 M1 12L2 12","plus":"M6 12H12M18 12H12M12 12V6M12 12V18","minus":"M6 12H18","nav-arrow-down":"M6 9L12 15L18 9","nav-arrow-right":"M9 6L15 12L9 18","view-grid":"M14 20.4V14.6C14 14.2686 14.2686 14 14.6 14H20.4C20.7314 14 21 14.2686 21 14.6V20.4C21 20.7314 20.7314 21 20.4 21H14.6C14.2686 21 14 20.7314 14 20.4Z M3 20.4V14.6C3 14.2686 3.26863 14 3.6 14H9.4C9.73137 14 10 14.2686 10 14.6V20.4C10 20.7314 9.73137 21 9.4 21H3.6C3.26863 21 3 20.7314 3 20.4Z M14 9.4V3.6C14 3.26863 14.2686 3 14.6 3H20.4C20.7314 3 21 3.26863 21 3.6V9.4C21 9.73137 20.7314 10 20.4 10H14.6C14.2686 10 14 9.73137 14 9.4Z M3 9.4V3.6C3 3.26863 3.26863 3 3.6 3H9.4C9.73137 3 10 3.26863 10 3.6V9.4C10 9.73137 9.73137 10 9.4 10H3.6C3.26863 10 3 9.73137 3 9.4Z","group":"M1 20V19C1 15.134 4.13401 12 8 12V12C11.866 12 15 15.134 15 19V20 M13 14V14C13 11.2386 15.2386 9 18 9V9C20.7614 9 23 11.2386 23 14V14.5 M8 12C10.2091 12 12 10.2091 12 8C12 5.79086 10.2091 4 8 4C5.79086 4 4 5.79086 4 8C4 10.2091 5.79086 12 8 12Z M18 9C19.6569 9 21 7.65685 21 6C21 4.34315 19.6569 3 18 3C16.3431 3 15 4.34315 15 6C15 7.65685 16.3431 9 18 9Z","megaphone":"M14 14V6M14 14L20.1023 17.487C20.5023 17.7156 21 17.4268 21 16.9661V3.03391C21 2.57321 20.5023 2.28439 20.1023 2.51296L14 6M14 14H7C4.79086 14 3 12.2091 3 10V10C3 7.79086 4.79086 6 7 6H14 M7.75716 19.3001L7 14H11L11.6772 18.7401C11.8476 19.9329 10.922 21 9.71716 21C8.73186 21 7.8965 20.2755 7.75716 19.3001Z","check-circle":"M7 12.5L10 15.5L17 8.5 M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z","warning-triangle":"M20.0429 21H3.95705C2.41902 21 1.45658 19.3364 2.22324 18.0031L10.2662 4.01533C11.0352 2.67792 12.9648 2.67791 13.7338 4.01532L21.7768 18.0031C22.5434 19.3364 21.581 21 20.0429 21Z M12 9V13 M12 17.01L12.01 16.9989","glass-half":"M3.03919 4.2939C3.01449 4.10866 3.0791 3.92338 3.23133 3.81499C3.9272 3.31953 6.3142 2 12 2C17.6858 2 20.0728 3.31952 20.7687 3.81499C20.9209 3.92338 20.9855 4.10866 20.9608 4.2939L19.2616 17.0378C19.0968 18.2744 18.3644 19.3632 17.2813 19.9821L16.9614 20.1649C13.8871 21.9217 10.1129 21.9217 7.03861 20.1649L6.71873 19.9821C5.6356 19.3632 4.90325 18.2744 4.73838 17.0378L3.03919 4.2939Z M3 5C5.57143 7.66666 18.4286 7.66662 21 5 M4 13C5.03151 14.2034 7.92505 14.8638 11 14.981C12.3455 15.0323 13.7258 14.9796 15 14.823C17.2664 14.5443 19.1972 13.9366 20 13 M4 13C6.28571 10.3333 17.7143 10.3334 20 13","xmark":"M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426","minus-circle":"M8 12H16 M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"};
+const ic = (n, s = 16, w = 1.5) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${IC[n] || n}"/></svg>`;
+// Barre du haut : tracés proches des symboles d'Apple de l'app (light.beacon.max, rectangle.bottomthird, videoprojector, timer, perspective)
+const SF = { beacon: 'M7 18v-5.5a5 5 0 0110 0V18 M5 18h14v3H5z M12 2.5v2 M4.6 5.1l1.5 1.5 M19.4 5.1l-1.5 1.5 M2 11.5h2 M20 11.5h2', band: 'M3 6A2 2 0 015 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2z M3 14.5h18 M6 17.2h12', proj: 'M2 10a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2z M16 15a2.5 2.5 0 100-5 2.5 2.5 0 000 5z M5 17v2.5 M19 17v2.5 M5.5 11h4.5', timer: 'M12 21.5a8 8 0 100-16 8 8 0 000 16z M12 9.5v4l2.5 2 M9.5 2.5h5', persp: 'M4 4.5l16 3v9l-16 3z M4 12h16 M12 6v12' };
+const CHEV = 'M7 10l5 5 5-5', SIDEBAR = 'M3 6.5A2.5 2.5 0 015.5 4h13A2.5 2.5 0 0121 6.5v11a2.5 2.5 0 01-2.5 2.5h-13A2.5 2.5 0 013 17.5z M9.5 4v16', PIANO = 'M3 6.5A1.5 1.5 0 014.5 5h15A1.5 1.5 0 0121 6.5v11a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5z M7.5 5v8 M12 5v8 M16.5 5v8 M7.5 13v6 M12 13v6 M16.5 13v6', UPDOWN = 'M8 10l4-4 4 4 M8 14l4 4 4-4';
+
+// ---------- État de la copie du board ----------
+function init() {
+  return {
+    page: 'board', out: false, menu: null, zones: false, dirty: true, bravo: false,
+    teams: { a: { name: 'Lynx', c: 'red' }, b: { name: 'Hiboux', c: 'orange' } },
+    seqs: [
+      { id: 'pub', l: 'Entrée du public' }, { id: 'how', l: 'Comment ça marche' }, { id: 'ech', l: 'Échauffement' },
+      { id: 'arb', l: "Entrée de l'arbitre" }, { id: 'eq', l: 'Entrée des équipes' }, { id: 'ha', l: 'Hymne · Lynx' }, { id: 'hb', l: 'Hymne · Hiboux' },
+      { id: 'p1', l: '1re période', per: 1 }, { id: 'add1', add: 1 }, { id: 'ent', l: 'Entracte' },
+      { id: 'p2', l: '2e période', per: 1 }, { id: 'add2', add: 1 }, { id: 'fin', l: 'Fin du match' }, { id: 'mer', l: 'Remerciements' },
+    ],
+    sel: 'pub', prep: { k: 'welcome' }, air: null, black: true, nb: 0, banner: false,
+    score: { a: 0, b: 0 }, fouls: { a: 0, b: 0 }, past: [], pending: [], inPlay: false,
+    card: null, result: null, remain: 2700, run: false, alert: false, improRun: false, skip: false,
+    pl: {}, tab: 'match', schema: false, sk: 0, gold: false,
+  };
+}
+let S = init(), cur = 0, done = false, timers = [], quiet = false;
+const col = s => COLORS[S.teams[s].c];
+const seq = id => S.seqs.find(q => q.id === id);
+function live(id) { S.seqs.forEach(q => { if (q.st === 'live') q.st = 'done'; }); seq(id).st = 'live'; S.black = false; }
+function prep(id, scr) { S.sel = id; S.prep = scr; }
+function addImpro(n, after) {
+  const i = S.seqs.findIndex(q => q.id === after) + 1;
+  S.seqs.splice(i, 0, { id: 'i' + n, hd: n }, ...[['c', 'Carte'], ['f', 'Faute'], ['v', 'Vote'], ['r', 'Résultat'], ['t', 'Score']].map(([k, l]) => ({ id: k + n, l, ind: 1 })));
+}
+const newCard = () => ({ title: '', cat: 'Libre', nat: 'Mixte', dur: 120 });
+const snap = () => JSON.parse(JSON.stringify(S.card));
+
+// ---------- Écrans projetés ----------
+function fd(from, to, delay) {
+  const go = from != null && from !== to;
+  return `<span class="fd" style="--fdl:${delay || .7}s"><b class="t1"><i>${to}</i></b><b class="b1"><i>${go ? from : to}</i></b>${go ? `<b class="t2"><i>${from}</i></b><b class="b2"><i>${to}</i></b>` : ''}</span>`;
+}
+// Score à deux chiffres, comme les volets de l'app
+function fd2(from, to, delay) {
+  const p = n => String(n).padStart(2, '0'), a = p(from == null ? to : from), b = p(to);
+  return `<span style="white-space:nowrap">${fd(+a[0], +b[0], delay)}${fd(+a[1], +b[1], delay)}</span>`;
+}
+const dots = (on, cls) => `<span class="fdots ${cls || ''}">${[0, 1, 2].map(i => `<i class="${i < on ? 'on' : ''}"></i>`).join('')}</span>`;
+function scrHTML(st) {
+  if (!st) return '';
+  const A = S.teams.a, B = S.teams.b, ca = col('a'), cb = col('b');
+  const bars = `<div class="g" style="gap:12px"><i style="width:80px;height:6px;background:${ca}"></i><i style="width:80px;height:6px;background:${cb}"></i></div>`;
+  const pill = (from, to, d) => `<div class="g pill"><span style="color:${ca}">${up(A.name)}</span>${fd2(from.a, to.a, d)}<span style="color:var(--line)">—</span>${fd2(from.b, to.b, d)}<span style="color:${cb}">${up(B.name)}</span></div>`;
+  const head = c => `<div class="s6 sec" style="font-size:44px;letter-spacing:.06em">IMPRO 1${c && c.title ? ' · ' + up(c.title) : ''}</div>`;
+  switch (st.k) {
+    case 'welcome': return `<div style="display:flex;width:100%;height:100%"><div class="poster" style="width:500px"><div>AFFICHE A4</div></div>
+      <div class="rise" style="flex:1;display:flex;flex-direction:column;gap:14px;align-items:flex-start;justify-content:center;padding:0 56px;text-align:left"><div class="s6 sec" style="font-size:44px;letter-spacing:.08em">MATCH D'IMPROVISATION</div>
+      <div style="font-size:96px;color:${ca};margin-top:16px">${up(A.name)}</div><div class="s6 sec" style="font-size:48px">VS</div><div style="font-size:96px;color:${cb}">${up(B.name)}</div>
+      <div class="s6" style="font-size:44px;margin-top:24px">SALLE DES FÊTES</div><div class="acc" style="font-size:48px;letter-spacing:.05em;margin-top:12px">LE MATCH VA COMMENCER</div></div></div>`;
+    case 'how': return `<div class="rise" style="display:flex;flex-direction:column;gap:44px;padding:0 64px;width:100%;box-sizing:border-box"><div style="font-size:88px">COMMENT ÇA MARCHE ?</div><div style="display:flex;gap:28px">
+      <div class="hw"><div>${ic('megaphone', 72)}</div><div>1. LE THÈME</div><div class="s6 sec" style="font-size:40px">tiré par l'arbitre</div></div>
+      <div class="hw"><div><i style="width:38px;height:56px;border-radius:6px;background:${ca};transform:rotate(-8deg)"></i><i style="width:38px;height:56px;border-radius:6px;background:${cb};transform:rotate(8deg)"></i></div><div>2. VOUS VOTEZ</div><div class="s6 sec" style="font-size:40px">avec vos cartons</div></div>
+      <div class="hw"><div>${dots(3, 'xs')}</div><div>3. LES FAUTES</div><div class="s6 sec" style="font-size:40px">3 fautes = 1 point adverse</div></div></div></div>`;
+    case 'title': return `<div class="rise" style="display:flex;flex-direction:column;gap:28px;align-items:center">${bars}<div style="font-size:160px">${st.t}</div><div class="s6 sec" style="font-size:48px;letter-spacing:.12em">${st.sub}</div>${st.sc ? pill(st.sc, st.sc) : ''}</div>`;
+    case 'anthem': return `<div style="position:absolute;inset:0;background:${col(st.c)}"></div><div class="rise" style="position:relative;color:var(--ink);display:flex;flex-direction:column;gap:32px;align-items:center">
+      <div style="width:200px;height:200px;border-radius:50%;border:8px solid var(--ink);box-sizing:border-box;display:grid;place-items:center;font-size:110px">${up(S.teams[st.c].name[0])}</div>
+      <div class="s6" style="font-size:56px;letter-spacing:.3em">HYMNE</div><div style="font-size:150px">${up(S.teams[st.c].name)}</div></div>`;
+    case 'impro': { const c = st.card; return `<div class="rise" style="display:flex;flex-direction:column;gap:28px;align-items:center;padding:0 56px">
+      <div class="g" style="gap:20px"><span class="s6 sec" style="font-size:48px;letter-spacing:.1em">IMPRO ${st.n}</span><span class="nat">${up(c.nat)}</span></div>
+      ${c.title ? `<div style="font-size:112px;max-width:1150px">${up(c.title)}</div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:20px;align-items:center;margin-top:6px"><span class="chip">${ic('view-grid')}${up(c.cat)}</span>
+      <div class="g" style="gap:24px"><span class="chip">${ic('group')}ILLIMITÉ</span><span class="chip">${ic('timer')}${c.dur / 60} MIN</span></div></div></div>`; }
+    case 'foul': return `<div style="position:absolute;left:0;right:0;top:0;height:14px;background:${col(st.team)}"></div><div class="rise" style="display:flex;flex-direction:column;gap:30px;align-items:center">
+      <div class="acc" style="font-size:56px;letter-spacing:.1em">FAUTE · ${up(S.teams[st.team].name)}</div><div style="font-size:140px">${up(st.type)}</div>
+      <div class="g" style="gap:18px">${dots(3)}<span class="sec" style="font-size:48px">3/3</span></div>
+      <div style="font-size:60px;color:var(--ink);background:${cb};border-radius:12px;padding:14px 36px">+1 POINT POUR ${up(B.name)}</div></div>`;
+    case 'vote': return `<div style="display:flex;flex-direction:column;gap:28px;align-items:center">${head(st.card)}<div style="font-size:136px">À VOS CARTONS !</div>
+      <div class="g" style="gap:56px;margin-top:12px"><div style="transform:rotate(-6deg)"><div class="vc" style="background:${ca}">${up(A.name)}</div></div><div style="transform:rotate(6deg)"><div class="vc" style="background:${cb};animation-delay:.12s">${up(B.name)}</div></div></div></div>`;
+    case 'point': { const r = st.res, bg = r === 'tie' || !r ? 'var(--fg)' : col(r), z = { a: 0, b: 0 };
+      return `<div style="position:absolute;inset:0;background:${bg}"></div><div class="rise" style="position:relative;color:var(--ink);display:flex;flex-direction:column;gap:24px;align-items:center">
+      <div class="s6" style="font-size:44px;letter-spacing:.06em">IMPRO 1${st.card && st.card.title ? ' · ' + up(st.card.title) : ''}</div>
+      <div style="font-size:64px;letter-spacing:.1em">${!r ? 'RÉSULTAT' : r === 'tie' ? 'ÉGALITÉ' : 'POINT POUR'}</div>
+      <div style="font-size:${r === 'tie' ? 130 : 170}px">${!r ? '…' : r === 'tie' ? 'UN POINT CHACUN' : up(S.teams[r].name)}</div>
+      ${pill(r ? st.from : st.sc || z, r ? st.to : st.sc || z, .9)}</div>`; }
+    case 'board': return `<div style="display:flex;flex-direction:column;gap:28px;align-items:center;width:100%"><div class="s6 sec" style="font-size:44px;letter-spacing:.08em">TABLEAU DES SCORES</div>
+      <div class="g" style="gap:48px;align-items:flex-start;width:100%">${['a', 'b'].map(s => `<div style="flex:1;display:flex;flex-direction:column;gap:16px;align-items:center">
+        <div style="font-size:64px;color:${col(s)}">${up(S.teams[s].name)}</div>
+        <div style="font-size:170px;padding:16px;background:var(--panel);border-radius:20px;box-shadow:inset 0 -6px 0 ${col(s)}">${fd2(st.from[s], st.to[s], s === 'a' ? .8 : 1.1)}</div>
+        <div class="g" style="gap:14px"><span class="sec" style="font-size:40px">FAUTES</span>${dots(0, 'sm')}</div></div>`).join('')}</div>
+      <div class="g" style="width:60px;height:60px;border-radius:10px;font-size:40px;color:var(--ink);margin-top:10px;background:${st.res === 'tie' ? 'var(--soft)' : col(st.res)}">1</div></div>`;
+    case 'win': { const sc = st.sc, w = sc.a > sc.b ? 'a' : 'b', wc = col(w);
+      return `<div style="display:flex;width:100%;height:100%"><div class="rise" style="flex:1;position:relative;display:flex;flex-direction:column;gap:24px;align-items:flex-start;justify-content:center;padding:0 64px;text-align:left"><i style="position:absolute;left:0;top:0;bottom:0;width:12px;background:${wc}"></i>
+      <div class="s6 sec" style="font-size:44px;letter-spacing:.08em">FIN DU MATCH</div><div style="font-size:56px;letter-spacing:.05em">VICTOIRE DE</div><div style="font-size:110px;color:${wc}">${up(S.teams[w].name)}</div>
+      <div class="g" style="gap:28px"><span style="font-size:110px;color:${ca}">${sc.a}</span><span style="font-size:56px;color:var(--line)">—</span><span style="font-size:110px;color:${cb}">${sc.b}</span></div></div>
+      ${st.gold ? `<div style="width:560px;background:var(--panel);display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;padding:36px;box-sizing:border-box"><div class="acc" style="font-size:96px">★</div><div class="acc" style="font-size:60px;letter-spacing:.1em">IMPRO D'OR</div><div class="s6 sec" style="font-size:42px">IMPRO 1 · LIBRE</div><div style="font-size:64px">${up(st.gold)}</div></div>` : ''}</div>`; }
+    case 'merci': { const qr = 'width:150px;height:150px;border:10px solid #fff;box-sizing:border-box;background:repeating-conic-gradient(#000 0 25%,#fff 0 50%) 0 0/30px 30px';
+      return `<div style="display:flex;width:100%;height:100%"><div class="rise" style="flex:1;position:relative;display:flex;flex-direction:column;gap:30px;align-items:flex-start;justify-content:center;padding:0 48px 0 64px;text-align:left"><i style="position:absolute;left:0;top:0;bottom:0;width:12px;background:var(--accent)"></i>
+      <div><div class="acc" style="font-size:150px">MERCI !</div><div class="s6" style="font-size:44px;letter-spacing:.03em;margin-top:6px">AUX JOUEURS, AUX ARBITRES, AUX MUSICIENS… ET À VOUS !</div></div>
+      <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><span style="font-size:44px;letter-spacing:.08em;background:var(--accent);color:var(--ink);padding:2px 18px;border-radius:8px">PROCHAINE DATE</span><span class="s6" style="font-size:52px">SAMEDI 12 DÉCEMBRE</span></div></div>
+      <div style="width:600px;background:var(--panel);display:flex;flex-direction:column;gap:26px;align-items:flex-start;justify-content:center;padding:0 48px;box-sizing:border-box;text-align:left"><div style="font-size:56px;letter-spacing:.08em">SUIVEZ-NOUS</div>
+      ${['@LYNX.IMPRO', '@HIBOUX.IMPRO'].map(t => `<div class="g" style="gap:24px"><i style="${qr}"></i><span class="s6" style="font-size:44px">${t}</span></div>`).join('')}</div></div>`; }
+    case 'inter': return `<div style="display:flex;width:100%;height:100%"><div class="rise" style="flex:1;display:flex;flex-direction:column;gap:28px;align-items:flex-start;justify-content:center;padding:0 56px;text-align:left">
+      <div style="font-size:140px">ENTRACTE</div><div class="acc g" style="font-size:56px;gap:14px">${ic('glass-half', 56)}LE BAR EST OUVERT !</div><i style="width:120px;height:2px;background:var(--line)"></i>
+      <div class="s6 sec" style="font-size:44px;letter-spacing:.08em">SCORE À LA MI-TEMPS</div>
+      <div class="g" style="gap:32px;text-align:center">${['a', 'b'].map(s => `<div><div style="font-size:120px;color:${col(s)}">${st.sc[s]}</div><div style="font-size:48px;color:${col(s)}">${up(S.teams[s].name)}</div></div>`).join('<span style="font-size:60px;color:var(--line)">—</span>')}</div></div>
+      <div class="poster" style="width:528px"><div>AFFICHE A4</div></div></div>`;
+  }
+  return '';
+}
+function setScreen(h, st) {
+  const key = JSON.stringify(st) + S.teams.a.c + S.teams.b.c;
+  if (h._k === key) return false;
+  const soft = h._st && st && h._st.k === st.k && (st.k === 'impro' || st.k === 'welcome');
+  h._k = key; h._st = st;
+  const d = document.createElement('div'); d.className = 'scr' + (soft ? '' : ' in'); d.innerHTML = scrHTML(st);
+  const old = [...h.querySelectorAll('.scr')];
+  h.insertBefore(d, h.querySelector('.blk, .pvf'));
+  if (soft) { d.querySelectorAll('.rise').forEach(e => e.classList.remove('rise')); old.forEach(o => o.remove()); }
+  else old.forEach(o => { o.classList.add('out'); setTimeout(() => o.remove(), 460); });
+  return true;
+}
+
+// ---------- Schéma animé : on prépare, puis on projette ----------
+const FLOW = ['Carte', 'Fautes', 'Vote', 'Résultat', 'Score'];
+const SCH = [
+  { p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, cap: '<b>1.</b> Le board prépare toujours l’écran suivant. <b>Vous seul</b> le voyez, en jaune pointillé.' },
+  { p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, press: 1, cap: '<b>2.</b> <b>Projeter</b> l’envoie à l’antenne.' },
+  { p: 'Écran de vote', a: 'Carte de l’impro', ai: 0, pi: 2, cap: '<b>3.</b> La salle voit la carte. Le <b>vote</b> se prépare déjà, sans rien faire.' },
+  { p: 'Écran des fautes', a: 'Carte de l’impro', ai: 0, pi: 1, tag: 'faute sifflée', cap: 'L’arbitre siffle une faute ? Vous la saisissez : l’<b>écran des fautes</b> prend la place du vote.' },
+  { p: 'Écran des fautes', a: 'Carte de l’impro', ai: 0, pi: 1, press: 1, cap: 'Un clic sur <b>Projeter</b> et la salle voit la faute…' },
+  { p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, cap: '…puis le <b>vote</b> se prépare de nouveau.' },
+  { p: 'Écran de vote', a: 'Écran des fautes', ai: 1, pi: 2, press: 1, cap: 'Fin de l’impro : <b>Projeter</b> envoie le vote.' },
+  { p: 'Résultat', a: 'À vos cartons !', ai: 2, pi: 3, cap: 'La salle vote. Pendant ce temps, le <b>résultat</b> attend l’arbitre.' },
+  { p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, click: 1, cap: '<b>Seule exception :</b> un clic sur l’équipe gagnante compte le point <b>et</b> le projette tout de suite.' },
+  { p: 'Tableau des scores', a: 'Point pour les Hiboux', ai: 3, pi: 4, press: 1, cap: '<b>Projeter</b> montre le tableau, où les volets tournent.' },
+  { p: 'Carte de l’impro suivante', a: 'Tableau des scores', ai: 4, pi: 0, cap: 'Et ça recommence avec l’impro suivante.' },
+];
+function schemaHTML() {
+  const b = SCH[S.sk % SCH.length], go = b.press || b.click;
+  return `<div class="sch"><h2>On prépare, <span>puis on projette</span></h2>
+    <div class="row2"><div class="col prep"><h4>En préparation<small>vous seul voyez</small></h4><div class="scr2"><b>${b.p}</b>${b.tag ? `<span class="tag">${b.tag}</span>` : ''}</div></div>
+      <div class="mid"><div class="go2 ${go ? 'fire' : ''}">${ic('arrow-right', 44, 1.8)}</div><b>Projeter</b><small>${b.click ? 'ou un clic sur le résultat' : '⌘↩'}</small></div>
+      <div class="col air"><h4>À l’antenne<small>la salle voit</small></h4><div class="scr2"><b>${b.a}</b></div></div></div>
+    ${go ? `<div class="ghost">${b.p}</div>` : ''}
+    <div class="strip"><b style="margin-right:6px">Une impro :</b>${FLOW.map((f, i) => `<span class="${i === b.ai ? 'a' : i === b.pi ? 'p' : i < b.ai ? 'd' : ''}">${f}${i === b.ai ? ' · à l’antenne' : i === b.pi ? ' · en préparation' : ''}</span>`).join('')}</div>
+    <div class="cap">${b.cap}</div>
+    <div class="foot"><i>Score et fautes : en direct, sans Projeter</i><i>Noir : coupe l’écran sans rien perdre</i><span class="dots">${SCH.map((_, i) => `<button type="button" data-a="sch" data-v="${i}" aria-label="Moment ${i + 1}" class="${i === S.sk % SCH.length ? 'on' : ''}"></button>`).join('')}</span></div></div>`;
+}
+setInterval(() => { if (S.schema && !quiet) { S.sk = (S.sk + 1) % SCH.length; render(); } }, 3600);
+
+// ---------- Rendu du board ----------
+function put(id, html) { const e = $(id); if (e._h !== html) { e.innerHTML = html; e._h = html; } return e; }
+// Fait défiler un panneau pour montrer un élément, sans jamais faire défiler la page
+function see(el) {
+  const c = el && el.closest('.vg-scroll'); if (!c || !c.clientHeight) return;
+  const k = c.getBoundingClientRect().height / c.clientHeight || 1;
+  const top = (el.getBoundingClientRect().top - c.getBoundingClientRect().top) / k + c.scrollTop;
+  c.scrollTo({ top: Math.max(0, top - c.clientHeight / 2 + el.offsetHeight / 2), behavior: quiet ? 'auto' : 'smooth' });
+}
+function render() {
+  const A = S.teams.a, B = S.teams.b, board = S.page === 'board';
+  const tool = (a, v, name, icon, chev, extra) => `<button type="button" class="glass" data-a="${a}" ${v ? `data-v="${v}"` : ''} title="${name}" aria-label="${name}">${extra || ''}${icon}${chev ? ic(CHEV, 11, 2.2) : ''}</button>`;
+  put('#r-bar', `${board ? '' : '<span class="lights"><i></i><i></i><i></i></span>'}
+    <div class="vg-seg"><button type="button" data-a="page" data-v="sheet" class="${board ? '' : 'on'}">Fiche du match</button><button type="button" data-a="page" data-v="board" class="${board ? 'on' : ''}">Board</button></div>
+    <div class="vg-ttl">Gala 2026${S.dirty ? ' — modifié' : ''}<small>Gala d'automne</small></div>
+    <div class="vg-tools">${board ? tool('siren', '', 'Sirène', ic(SF.beacon, 17)) + tool('x', '', 'Bandeau', ic(SF.band, 17), 1) + tool('menu', 'sortie', 'Sortie', ic(SF.proj, 17), 1, S.out ? '<i style="width:7px;height:7px;border-radius:50%;background:var(--ok)"></i>' : '')
+      + tool('x', '', 'Vue chrono', ic(SF.timer, 17), 1) + tool('x', '', 'MIDI', ic(PIANO, 19), 1) + tool('x', '', 'Calage', ic(SF.persp, 17)) : ''}
+    ${S.menu === 'sortie' ? `<div class="vg-menu sortie" id="m-sortie"><small>Plein écran sur</small><button type="button" data-a="output" data-v="proj">Vidéoprojecteur (1920 × 1080)</button><hr><button type="button" data-a="output" data-v="test">Fenêtre de test</button><button type="button" disabled>Fermer la sortie</button></div>` : ''}</div>`);
+  $('#vg-side').hidden = !board; $('#vg-board').hidden = !board; $('#r-shead').hidden = board; $('#r-sheet').hidden = board;
+  if (board) renderBoard(); else renderSheet();
+  // Repères des zones, mesurés sur la copie (repère 1240 × 880 de la scène)
+  let zh = '';
+  if (S.zones) {
+    const st = $('#vg-stage').getBoundingClientRect(), k = st.width / 1240 || 1;
+    const z = (sel, label, pos, delay) => { const r = $(sel).getBoundingClientRect(); return `<div class="zone" style="left:${(r.left - st.left) / k - 4}px;top:${(r.top - st.top) / k - 4}px;width:${r.width / k + 8}px;height:${r.height / k + 8}px;animation-delay:${delay}s"><b style="${pos}">${label}</b></div>`; };
+    zh = z('#vg-side', '1 · Le déroulé', 'top:44px', 0) + z('#s-prep', '2 · Vous préparez', 'top:auto;bottom:10px', .25) + z('#s-air', '3 · La salle voit', 'top:auto;bottom:10px', .5)
+      + z('#r-clock', '4 · Chronos et score', 'left:auto;right:10px;top:auto;bottom:-16px', .75);
+  }
+  put('#vg-zones', zh);
+  put('#vg-schema', S.schema ? schemaHTML() : '');
+  const bv = $('#vg-bravo'); if (S.bravo && bv.hidden) bv.innerHTML = '<div>' + [...'BRAVO'].map((c, i) => `<span style="animation-delay:${.15 + i * .12}s">${c}</span>`).join('') + '</div>'; bv.hidden = !S.bravo;
+  const s = STEPS[cur]; if (s && s.see && !done) see($(s.see));
+  requestAnimationFrame(cam);
+}
+// Fiche du match : trois onglets en tuiles, d'après les captures de l'app (12 novembre 2026)
+function renderSheet() {
+  const tabs = [['match', 'Match et équipes'], ['regl', 'Règlement'], ['cont', 'Contenus']];
+  put('#r-shead', `<span class="h2">Fiche du match</span><span class="seg2">${tabs.map(([k, l]) => `<span data-a="tab" data-v="${k}" class="${S.tab === k ? 'on' : ''}" style="${S.tab === k ? 'background:rgba(255,255,255,.2)' : ''}">${l}</span>`).join('')}</span><button type="button" class="btn" data-a="page" data-v="board">${ic('arrow-right', 15)}Aller au board</button>`);
+  const row = (l, v) => `<div><span class="lb">${l}</span><span class="v">${v}</span></div>`;
+  const fld = (t, ph) => `<span class="fld ${ph ? 'ph' : ''}">${t}</span>`;
+  const pop = t => `<span class="pop">${t}${ic(UPDOWN, 12, 2)}</span>`;
+  const sw = on => `<i class="sw2 ${on ? 'on' : ''}"></i>`;
+  const stp = (v, u) => `<span class="stp"><i class="pm2" style="width:38px">${ic('minus', 12)}</i><span class="val" style="font-weight:700;color:var(--fg);font-size:14.5px">${v}${u ? ' ' + u : ''}</span><i class="pm2" style="width:38px">${ic('plus', 12)}</i></span>`;
+  const chip = (t, x) => `<span class="chp ${x || ''}">${t}${x ? '' : `<span class="muted">${ic('xmark', 10, 2)}</span>`}</span>`;
+  const tile = (t, body, opt) => `<div class="tile ${opt && opt.cls || ''}" style="${opt && opt.st || ''}"><h3>${t}${opt && opt.right ? `<small style="font-weight:400">${opt.right}</small>` : ''}</h3><div class="frm">${body}</div></div>`;
+  const add = t => `<button type="button" class="btn" data-a="x">${ic('plus', 13, 2)}${t}</button>`;
+  const line = h => `<div style="grid-template-columns:1fr;border-top:0">${h}</div>`;
+  let h = '';
+  if (S.tab === 'match') {
+    const player = (n, r) => `<div style="grid-template-columns:1fr 140px 22px;gap:10px;border-top:0;min-height:31px">${fld(n)}<span class="pop" style="justify-content:space-between">${r}${ic(UPDOWN, 12, 2)}</span><span class="muted">${ic('minus-circle', 15)}</span></div>`;
+    const team = (s, coach, pl) => tile(`<span style="color:${col(s)}">Équipe ${s.toUpperCase()}</span>`,
+      row('Nom', fld(esc(S.teams[s].name))) + row('Couleur', `<span class="sw" id="sw-${s}">${Object.keys(COLORS).map(c => `<button type="button" data-a="color" data-v="${s}:${c}" title="${CNAMES[c]}" aria-label="${CNAMES[c]}" style="background:${COLORS[c]}" class="${S.teams[s].c === c ? 'on' : ''}"></button>`).join('')}</span>`)
+      + row('Logo', `<i class="logo" style="width:30px;height:30px"></i><span class="btn">Choisir un logo…</span><span class="lb" style="margin-left:6px">Coach</span>${fld(coach)}`)
+      + `<div style="grid-template-columns:1fr auto;border-top:1px solid var(--hair);margin-top:4px"><b>Joueurs</b>${add('Ajouter un joueur')}</div>`
+      + pl.map((n, i) => player(n, ['Capitaine (C)', 'Assistant (A)', 'Joueur'][i])).join(''), { cls: 'team', st: `--tc:${col(s)}`, right: '3 joueurs' });
+    h = `${close(S.teams.a.c, S.teams.b.c) ? `<div class="warnl">${ic('warning-triangle', 16)}Ces deux couleurs se ressemblent : depuis la salle, on risque de confondre les équipes.</div>` : ''}
+      <div class="sg" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      ${tile('Match', row('Titre', fld('Gala d\'automne')) + row('Date', sw(false) + '<span class="cap">pas de date</span>') + row('Lieu', fld('Salle des fêtes')))}
+      ${tile('Corps arbitral', row('Arbitre', fld('Claire')) + row('Assistants', fld('Hugo') + fld('Lou')) + row('MC', fld('Sacha')) + row('Musiciens', fld('Nina, Tom')))}
+      ${tile('Cérémonial d\'ouverture', line(`<span class="cap">Entrée des équipes</span>`) + line(`<span>${pop(esc(S.teams.a.name) + ' puis ' + esc(S.teams.b.name))}</span>`)
+        + `<div style="grid-template-columns:1fr auto;border-top:0"><span>Hymnes des équipes<br><span class="cap">Un écran par équipe après l'entrée des équipes</span></span>${sw(true)}</div>`
+        + line(`<span class="cap">Ordre des hymnes</span>`) + line(`<span>${pop(esc(S.teams.a.name) + ' puis ' + esc(S.teams.b.name))}</span>`))}</div>
+      <div class="sg" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">${team('a', 'Inès', ['Zoé', 'Malik', 'Jeanne'])}${team('b', 'Marc', ['Léa', 'Sami', 'Nour'])}</div>`;
+  } else if (S.tab === 'regl') {
+    const alert = (m, on) => `<div style="grid-template-columns:auto auto 1fr auto;gap:10px;border-top:0"><span>À</span>${stp(m, 'min')}<span>de la fin</span><span class="muted">${ic('minus-circle', 15)}</span></div>
+      <div style="grid-template-columns:auto auto auto auto 1fr;gap:10px;padding-left:12px;border-top:0">Sirène${sw(on)}<span style="margin-left:14px">Bandeau public</span>${sw(on)}</div>`;
+    h = `<div class="sg" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start"><div style="display:grid;gap:12px;min-width:0">
+      ${tile('Temps de jeu', `<div style="grid-template-columns:150px 1fr;border-top:0"><span>Périodes</span>${stp(2)}</div><div style="grid-template-columns:150px 1fr;border-top:0"><span>Durée d'une période</span>${stp(45, 'min')}</div><div style="grid-template-columns:150px 1fr;border-top:0"><span>Chrono</span><span class="seg2"><span class="on" style="background:rgba(255,255,255,.2);padding:3px 30px">En continu</span><span style="padding:3px 14px">Temps de jeu seulement</span></span></div>`)}
+      ${tile('Alertes de fin de période', alert(15, true) + alert(5, false), { right: '' }).replace('</h3>', `<span style="margin-left:auto">${add('Ajouter une alerte')}</span></h3>`)}
+      ${tile('Affichage au public', `<div style="grid-template-columns:auto 1fr;gap:12px;border-top:0">Afficher le temps de période au public${sw(false)}</div><div style="grid-template-columns:auto 1fr;gap:12px;border-top:0"><span>Afficher le score pendant le vote<br><span class="cap">Valeur par défaut, modifiable à chaque vote</span></span>${sw(false)}</div>
+        <div style="grid-template-columns:auto 1fr;gap:12px;border-top:0">Taille des textes projetés<span class="seg2" style="justify-self:start"><span class="on" style="background:rgba(255,255,255,.2)">100 %</span><span>115 %</span><span>130 %</span></span></div>
+        <div style="grid-template-columns:auto 1fr;gap:12px;border-top:0"><span class="btn">Projeter la mire de lisibilité</span><span class="cap">À projeter pendant l'installation, depuis le dernier rang.</span></div>`)}</div>
+      <div style="display:grid;gap:12px;min-width:0">
+      ${tile('Équipes et fautes', `<div style="grid-template-columns:200px 1fr;border-top:0"><span>Joueurs par équipe</span>${stp(5)}</div><div style="grid-template-columns:200px 1fr;border-top:0"><span>Fautes pour un point à l'adversaire</span>${stp(3)}</div><div style="grid-template-columns:auto 1fr;gap:12px;border-top:0">Remettre les fautes à zéro après le point accordé${sw(true)}</div>
+        <div style="grid-template-columns:1fr;border-top:1px solid var(--hair);padding-top:8px"><b>Types de fautes</b></div>${line(`<span class="chips">${FOULS.slice(0, 8).map(f => chip(f)).join('')}${chip(FOULS[8], 'dash')}${add('Ajouter une faute')}</span>`)}
+        ${line('<span class="cap">« À clarifier par l\'arbitre » reste toujours en fin de liste : on la choisit quand la raison du coup de sifflet n\'a pas été comprise. Elle compte comme une faute ordinaire.</span>')}`, { right: '9 types' })}
+      ${tile('Catégories d\'impro', line(`<span class="chips">${['Libre', 'Chantée', 'Rimée', 'Sans paroles', 'À la manière de…'].map(f => chip(f)).join('')}${add('Ajouter une catégorie')}</span>`), { right: '5' })}</div></div>`;
+  } else {
+    h = `<div class="sg" style="grid-template-columns:230px minmax(0,1fr) minmax(0,1fr);align-items:stretch">
+      ${tile('Affiche', `<div style="grid-template-columns:1fr;justify-items:center;border-top:0;padding:4px 0 10px"><div class="a4" style="border:0;background:rgba(255,255,255,.12)">${ic('page', 30)}</div></div>${line('<span class="btn" style="justify-self:center">Choisir l\'affiche…</span>')}${line('<span class="cap" style="text-align:center">Image au format A4 portrait, projetée en entier à l\'accueil et à l\'entracte.</span>')}`, { st: 'grid-row:span 2' })}
+      ${tile('Prochaines dates', line(fld('Prochaine date', 1)) + line(fld('Samedi 12 décembre')) + line(`<span>${add('Ajouter une date')}</span>`))}
+      ${tile('Sons', `<div style="grid-template-columns:110px 1fr auto;gap:12px;border-top:0"><span>Sirène</span><span class="sld"></span><span><i class="cb off"></i> Coupé</span></div><div style="grid-template-columns:110px 1fr auto;gap:12px;border-top:0"><span>Clic des volets</span><span class="sld"></span><span><i class="cb off"></i> Coupé</span></div>${line('<span class="cap">Joués sur la sortie son choisie dans les réglages de macOS.</span>')}`)}
+      ${tile('Réseaux sociaux', `<div style="grid-template-columns:150px 1fr 1fr 22px;gap:10px;border-top:0">${pop('Instagram')}${fld('instagram.com/lynx.impro')}${fld('@LYNX.IMPRO')}<span class="muted">${ic('minus-circle', 15)}</span></div>${line(`<span>${add('Ajouter un réseau social')}</span>`)}`, { st: 'grid-column:span 2', right: '3 au plus sont projetés aux remerciements, avec un QR code' })}</div>`;
+  }
+  put('#r-sheet', h);
+}
+function renderBoard() {
+  // Déroulé
+  put('#vg-sbt', ic(SIDEBAR, 17));
+  const stI = st => st === 'done' ? `<i class="st done">${ic('check-circle', 15, 1.7)}</i>` : `<i class="st ${st || 'pend'}"></i>`;
+  // Comme l'app : le cérémonial d'ouverture et chaque période forment un bloc repliable
+  const rowH = q => q.add ? `<button type="button" class="addrow" data-a="add">${ic('plus', 14, 2)}Ajouter une impro</button>`
+    : q.hd ? `<div class="row hd"><span>Impro ${q.hd}${q.hd === 1 && S.card && S.card.title ? ' · ' + esc(S.card.title) : ''}</span></div>`
+    : `<div class="row ${q.ind ? 'ind' : ''} ${S.sel === q.id ? 'sel' : ''}">${stI(q.st)}${esc(q.per ? 'Écran de début de période' : q.l)}${q.st === 'live' ? '<em>DIRECT</em>' : ''}</div>`;
+  const CER = ['how', 'ech', 'arb', 'eq', 'ha', 'hb'], ENDS = ['ent', 'p2', 'fin', 'mer'];
+  const grpH = (t, items, det) => {
+    const rows = items.filter(q => !q.add && !q.hd), st = rows.some(q => q.st === 'live') ? 'live' : rows.every(q => q.st === 'done') ? 'done' : 'pend';
+    return `<div class="row grp"><span class="chev">${ic(CHEV, 12, 2.2)}</span>${stI(st)}${t}${st === 'live' ? '<em>DIRECT</em>' : `<small>${det}</small>`}</div><div class="gbody">${items.map(rowH).join('')}</div>`;
+  };
+  let html = '', i = 0; const L = S.seqs;
+  while (i < L.length) {
+    const q = L[i];
+    if (CER.includes(q.id)) {
+      const items = []; while (i < L.length && CER.includes(L[i].id)) items.push(L[i++]);
+      html += grpH("Cérémonial d'ouverture", items, items.filter(x => x.st === 'done').length + '/' + items.length);
+    } else if (q.per) {
+      const items = [q]; i++; while (i < L.length && !ENDS.includes(L[i].id)) items.push(L[i++]);
+      const n = items.filter(x => x.hd).length;
+      html += grpH(q.id === 'p1' ? '1re période' : '2e période', items, n ? n + (n > 1 ? ' impros' : ' impro') : 'aucune impro');
+    } else { html += rowH(q); i++; }
+  }
+  put('#r-list', html);
+  put('#r-foot', `<button type="button" class="b lg" data-a="x">${ic(CHEV, 13, 2)}Suivante</button>`);
+  if (render.sel !== S.sel) { render.sel = S.sel; see($('#r-list .row.sel')); }
+  // Chronos et score
+  const c = S.card, n = S.sel === 'c2' ? 2 : 1, ilab = c ? (n === 2 ? 'Impro 2' : 'Impro 1' + (c.title ? ' · ' + esc(c.title) : '')) : 'Impro';
+  const lancer = (a, run) => `<button type="button" class="b" data-a="${a}" style="width:68px;justify-content:center">${ic(run ? 'pause' : 'play', 12)}${run ? 'Pause' : 'Lancer'}</button>`;
+  const reset = `<button type="button" class="b" data-a="x" title="Remettre à zéro" aria-label="Remettre à zéro">${ic('refresh', 12)}</button>`;
+  put('#r-clock', `<div class="z"><div><span class="lab">1re période</span>${S.alert ? `<button type="button" class="b alert" data-a="alert">${ic('bell', 12)}Plus que 15 min</button>` : ''}</div>
+      <div><span id="vg-clk"></span>${lancer('clock', S.run)}<button type="button" class="b" data-a="x">−1 min</button><button type="button" class="b" data-a="x">+1 min</button>${reset}</div></div>
+    <i class="sep"></i><div class="z"><span class="lab">${ilab}</span><div><span class="ic2"><span id="vg-ie">${ieText()}</span></span>${lancer('iclock', S.improRun)}${reset}</div></div>
+    <i class="sep"></i><div class="scz">${['a', 'b'].map(s => `<div><span class="nm" style="color:${col(s)}">${esc(S.teams[s].name)}</span><span class="d">${[0, 1, 2].map(i => `<i class="${i < S.fouls[s] ? 'on' : ''}"></i>`).join('')}</span><span class="pm">${ic('minus', 13)}</span><span class="n" data-n="${S.score[s]}">${S.score[s]}</span><span class="pm">${ic('plus', 13)}</span></div>`).join('')}</div><span class="hist" title="Historique des points">${ic('clock-rotate-right', 17)}</span>`);
+  document.querySelectorAll('.scz .n').forEach((e, i) => { const k = 'sc' + i; if (render[k] != null && render[k] !== e.dataset.n && !quiet) { e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); } render[k] = e.dataset.n; });
+  clockTo(S.remain);
+  // Aperçus
+  if (S.sel === 'c1' && S.card) S.prep = { k: 'impro', n: 1, card: snap() };
+  put('#h-prep', `En préparation${S.prep && JSON.stringify(S.prep) !== JSON.stringify(S.air) ? ' <span style="background:rgba(255,214,10,.28);color:#FFE27A">modifié</span>' : ''}`);
+  setScreen($('#s-prep'), S.prep);
+  put('#h-air', `À l'antenne${S.air ? (S.black ? ' <span style="background:#444">NOIR</span>' : ' <span style="background:rgba(255,90,95,.3)">● EN DIRECT</span>') : ''}`);
+  if (setScreen($('#s-air'), S.air) && S.air && !quiet) { const p = $('#pv-air'); p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); }
+  const ban = $('#s-air .ban'), top = $('#s-air .scr:not(.out)');
+  if (S.banner && top && !top.querySelector('.ban')) top.insertAdjacentHTML('beforeend', '<div class="ban"><div style="font-size:110px">15 DERNIÈRES MINUTES</div><div style="font-size:44px;letter-spacing:.08em">DE LA PÉRIODE</div></div>');
+  if (!S.banner && ban) ban.remove();
+  $('#vg-blk').classList.toggle('on', S.black);
+  put('#r-pcol', `<button type="button" class="go" data-a="project" aria-label="Projeter" ${S.prep ? '' : 'disabled'}>${ic('arrow-right', 22, 1.8)}</button><b>Projeter</b><small>⌘↩</small>
+    <button type="button" class="nb" data-a="black" aria-label="${S.black ? 'Rallumer' : 'Noir'}">${ic(S.black ? 'sun-light' : 'half-moon', 16)}</button><span>${S.black ? 'Rallumer' : 'Noir'}</span>`);
+  // Centre : fil d'étapes, puis trois tuiles fixes (Carte · étape en préparation · Joueurs en jeu), comme l'app
+  const stg = { c1: 0, f1: 1, v1: 2, r1: 3, t1: 4, c2: 0 }[S.sel];
+  let w = S.notice ? `<div class="notice">${ic('triangle-flag', 15)}${esc(S.notice)}</div>` : '';
+  if (stg == null) w += `<p class="muted" style="margin:0;font-size:13.5px">Séquence « ${esc((seq(S.sel) || {}).l || '')} » : rien à saisir. Projetez-la avec ⌘↩.</p>`;
+  else {
+    const nbn = (lead, title, detail, extra) => `<div class="nbn"><div><small>${lead}</small><b>${title}</b></div>${extra || (detail ? `<em>${detail}</em>` : '')}</div>`;
+    const cst = (seq('c' + n) || {}).st, plOn = cst === 'live' || cst === 'done';
+    const mine = S.past.filter(p => !p.old);
+    const fbtn = s => `<button type="button" class="btn" data-a="foulmenu" data-v="${s}">${ic('plus', 13, 2)}Faute ${esc(S.teams[s].name)}${ic(CHEV, 11, 2.2)}</button>`;
+    const foulTools = () => `<div style="display:flex;flex-direction:column;gap:9px;position:relative"><p style="display:flex;gap:8px;align-items:baseline"><b style="font-size:15px">Faute sifflée par l'arbitre</b><span class="cap">facultatif : seulement si l'arbitre siffle</span></p>
+        <div style="display:flex;gap:10px">${fbtn('a')}${fbtn('b')}</div>
+        ${S.pending.length ? `<span class="cap">Faute sifflée en cours</span>` + S.pending.map(p => `<div class="pfoul" style="padding:6px 10px"><i style="background:${col(p.t)}"></i><span>${esc(p.type)}</span>${ic('xmark', 12)}</div>`).join('') + `<div style="display:flex;justify-content:space-between"><button type="button" class="btn" data-a="x">Tout effacer</button><button type="button" class="btn" data-a="whistle">Valider la faute sifflée</button></div>`
+          : '<span class="cap" style="font-size:12px">Choisissez l\'équipe fautive et le type de faute. Plusieurs fautes saisies ensemble comptent pour un seul coup de sifflet.</span>'}
+        ${S.menu === 'foul' ? `<div class="vg-menu types" id="m-types" style="top:50px">${FOULS.map((f, i) => `${i === FOULS.length - 1 ? '<hr>' : ''}<button type="button" data-a="foultype" data-v="${esc(f)}" ${i === FOULS.length - 1 ? 'style="font-style:italic"' : ''}>${esc(f)}</button>`).join('')}</div>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px"><b style="font-size:14px">Fautes déjà sifflées</b><button type="button" class="btn" data-a="x" ${mine.length ? '' : 'disabled'}>${ic('undo', 13)}Annuler la dernière faute sifflée</button></div>
+        ${mine.length ? `<div class="fouls" style="display:block"><ul>${mine.map(p => `<li><i style="background:${col(p.t)}"></i>${esc(S.teams[p.t].name)} · ${esc(p.type)}${p.pt ? `<b>+1 ${esc(S.teams.b.name)}</b>` : ''}</li>`).reverse().join('')}</ul></div>` : '<span class="muted">Aucune faute sifflée pendant cette impro.</span>'}</div>`;
+    const plT = (s, names) => `<div><h6><span style="color:${col(s)};font-size:14.5px">${esc(S.teams[s].name)}</span><small>${names.filter(x => S.pl[x]).length}/${names.length}</small></h6>${names.map((nm, i) => `<button type="button" class="plb" data-a="player" data-v="${nm}" ${plOn ? '' : 'disabled'}><i class="cb ${S.pl[nm] ? '' : 'off'}">${S.pl[nm] ? '✓' : ''}</i>${nm}${i < 2 ? `<u>${'CA'[i]}</u>` : ''}</button>`).join('')}</div>`;
+    const players = wd => `<div class="tile ${plOn ? '' : 'off'}" style="width:${wd}px"><h3>${ic('group', 16)}Joueurs en jeu<small style="font-weight:400">non projeté</small></h3><div class="plays">${plT('a', ['Zoé', 'Malik', 'Jeanne'])}${plT('b', ['Léa', 'Sami', 'Nour'])}</div>${plOn ? '' : '<span class="cap">Se cochent dès que la carte est à l\'antenne, jusqu\'au score.</span>'}</div>`;
+    w += `<div class="rail"><b>Impro ${n}</b>` + ['Carte', 'Fautes', 'Vote', 'Résultat', 'Score'].map((l, i) => { const q = seq('cfvrt'[i] + n) || {}; return `<span class="${i === 1 ? 'opt' : ''} ${i === stg ? 'on' : ''}">${q.st === 'done' ? `<i class="st done">${ic('check-circle', 13, 1.8)}</i>` : q.st === 'live' ? '<i class="st live"></i>' : ''}${l}</span>${i < 4 ? `<u>${ic('nav-arrow-right', 11, 2)}</u>` : ''}`; }).join('') + '</div><div class="tiles">';
+    if (stg === 0) {
+      const k = S.sel === 'c1' ? c : newCard(), dis = S.sel === 'c2' ? 'disabled' : '';
+      const pm = (sign, off) => `<i class="pm2 ${off ? 'off' : ''}" style="width:38px;height:24px">${ic(sign, 12)}</i>`;
+      w += `<div class="tile act" style="flex:1"><h3>Carte<small style="font-weight:400;margin-left:0">dans l'ordre de l'annonce de l'arbitre</small></h3><div class="frm">
+        <div><span class="lb">Nature</span><span class="v"><span class="seg2"><span class="on" style="background:rgba(255,255,255,.22);padding:3px 20px">Mixte</span><span style="padding:3px 14px">Comparée</span></span></span></div>
+        <div><label class="lb" for="vg-title">Thème</label><span class="v"><input id="vg-title" class="fld" type="text" autocomplete="off" placeholder="Le chemin de la rencontre" ${dis} style="font-size:15px;padding:5px 8px"></span></div>
+        <div><span class="lb">Catégorie</span><span class="v"><span class="pop" style="min-width:110px;justify-content:space-between">${k.cat}${ic(UPDOWN, 13, 2)}</span><span class="fld ph">Précision : à la manière de…</span></span></div>
+        <div><span class="lb">Joueurs</span><span class="v">${pm('minus', 1)}<span class="val" style="font-weight:700;color:var(--fg)">Illimité</span>${pm('plus', 1)}<i class="cb">✓</i>Illimité</span></div>
+        <div><span class="lb">Durée</span><span class="v">${pm('minus')}<span class="val" style="font-weight:700;color:var(--fg);font-size:15px">${mmss(k.dur)}</span>${pm('plus')}</span></div>
+        <div class="quick" id="vg-durs"><button type="button" class="b q" data-a="x" ${dis}>45 s</button>${[1, 2, 3, 4, 5, 6, 7].map(m => `<button type="button" class="b q" data-a="dur" data-v="${m}" ${dis}>${m} min</button>`).join('')}</div></div>
+        ${k.title ? '' : `<div><button type="button" class="btn" data-a="skip">${ic('arrow-right', 14)}Pas d'autre impro : passer à « Entracte »</button></div>`}</div>
+        <div class="tile" style="width:220px">${nbn('Projeter montrera', `La carte de l'impro ${n}`, 'puis le vote se prépare')}<b style="font-size:14.5px;color:var(--soft)">Pendant le jeu</b><p style="font-size:13px;color:var(--soft)">Une fois la carte projetée, le <b>vote</b> se prépare tout de suite. Si l'arbitre siffle une faute, vous pourrez la saisir ici dès que la carte sera à l'antenne.</p></div>${players(240)}`;
+    } else {
+      const fl = ['a', 'b'].map(s => S.teams[s].name + ' ' + mine.filter(p => p.t === s).length).join(' · ');
+      w += `<div class="tile" style="width:220px"><h3 style="color:var(--dim)">Carte${cst === 'live' ? '<small class="live">● DIRECT</small>' : cst === 'done' ? '<small class="ok">✓ JOUÉE</small>' : ''}</h3>
+        <b style="font-size:17px">${esc(c.title || 'Sans thème')}</b><dl class="kv"><dt>Nature</dt><dd>${c.nat}</dd><dt>Catégorie</dt><dd>${esc(c.cat)}</dd><dt>Joueurs</dt><dd>Illimité</dd><dt>Durée</dt><dd>${mmss(c.dur)}</dd>${mine.length ? `<dt>Fautes</dt><dd>${esc(fl)}</dd>` : ''}${S.result && stg >= 4 ? `<dt>Vote</dt><dd>${S.result === 'tie' ? 'Égalité' : esc(S.teams[S.result].name)}</dd>` : ''}</dl>
+        <span style="flex:1"></span><button type="button" class="btn" data-a="x" style="align-self:center">${ic('page', 14)}Modifier la carte</button></div>`;
+      w += `<div class="tile act" style="flex:1">`;
+      if (stg === 1) w += nbn('Projeter montrera', 'L\'écran des fautes', 'puis le vote se prépare de nouveau') + foulTools();
+      else if (stg === 2) w += nbn('Projeter montrera', 'L\'écran de vote', '', '<span style="display:flex;gap:10px;align-items:center;font-size:12px">Score et fautes en bandeau<i class="sw2"></i></span>') + (S.inPlay ? foulTools() : '<p class="muted" style="font-size:13px">L\'écran de vote se projette avec <b>Projeter</b>. Les fautes ne se saisissent que pendant le jeu.</p>');
+      else if (stg === 3) w += nbn('Pas besoin de Projeter', 'Un clic compte le point et montre le résultat') + `<b style="font-size:15px">Qui remporte le vote ?</b><div class="res" id="vg-res">
+        <button type="button" data-a="result" data-v="a" style="background:${col('a')}"><small>Point pour</small><span>${esc(S.teams.a.name)}</span></button><button type="button" data-a="result" data-v="tie" style="background:#6E6E73"><small>Égalité</small><span>un point chacune</span></button><button type="button" data-a="result" data-v="b" style="background:${col('b')}"><small>Point pour</small><span>${esc(S.teams.b.name)}</span></button></div>
+        <span class="cap" style="font-size:12px">Le tableau des scores se prépare ensuite. Un mauvais clic se corrige à l'étape Score, avant de le projeter.</span>`;
+      else {
+        const pv = S.prep && S.prep.k === 'board' ? S.prep : { from: S.score, to: S.score };
+        w += nbn('Projeter montrera', 'Le tableau des scores', 'puis la carte de l\'impro suivante se prépare') + `<div class="big"><span class="m">${pv.from.a} — ${pv.from.b}</span><span class="m">${ic('arrow-right', 22, 1.8)}</span><span>${pv.to.a} — ${pv.to.b}</span><span class="cap" style="font:12px var(--ui);max-width:170px">Les volets défilent de l'ancien score au nouveau.</span></div>
+          <div><p class="cap" style="font-size:12px;margin-bottom:6px">Corriger le vote (le résultat corrigé repart à l'écran)</p><div class="corr">${['a', 'tie', 'b'].map(k2 => `<button type="button" class="btn" data-a="x">${k2 === 'tie' ? 'Égalité' : esc(S.teams[k2].name)}</button>`).join('')}</div></div>`;
+      }
+      w += `</div>${players(280)}`;
+    }
+    w += '</div>';
+  }
+  const wk = put('#r-work', w);
+  if (render.wsel !== S.sel) { render.wsel = S.sel; wk.scrollTop = 0; }
+  const ti = $('#vg-title'); if (ti && S.sel === 'c1' && ti.value !== S.card.title && document.activeElement !== ti) ti.value = S.card.title;
+}
+// Chrono : défile en accéléré quand la valeur saute, sinon seconde par seconde
+let shown = 2700, tween = 0, ie = 0;
+// Chrono d'impro : décompte de la durée annoncée (comme l'app)
+function ieText() { return S.sel === 'c2' || !S.card ? '0:00' : mmss(Math.max(0, S.card.dur - ie)); }
+function drawClock() { const e = $('#vg-clk'); if (!e) return; e.textContent = mmss(shown); e.className = shown <= 300 ? 'crit' : shown <= 900 ? 'warn' : ''; }
+function clockTo(v) {
+  cancelAnimationFrame(tween); tween = 0;
+  if (Math.abs(shown - v) < 30 || quiet) { shown = v; drawClock(); return; }
+  const from = shown, t0 = performance.now();
+  const stepF = t => { const p = Math.min(1, (t - t0) / 2200); shown = from + (v - from) * (1 - Math.pow(1 - p, 2)); drawClock(); tween = p < 1 ? requestAnimationFrame(stepF) : 0; };
+  tween = requestAnimationFrame(stepF);
+}
+setInterval(() => {
+  if (S.run && !tween && S.remain > 0) { S.remain--; shown = S.remain; drawClock(); }
+  if (S.improRun) ie++; else if (!S.card) ie = 0;
+  const e = $('#vg-ie'); if (e) e.textContent = ieText();
+}, 1000);
+
+// ---------- Étapes ----------
+const CH = ['Bienvenue', 'Avant la soirée', 'Brancher', "L'ouverture", 'Une impro', 'La période', 'La fin'];
+const P = '[data-a=project]';
+const STEPS = [
+  { ch: 0, t: 'ImproMatch en 10 minutes', x: "ImproMatch pilote l'écran du vidéoprojecteur pendant un match d'impro. Vous allez dérouler une soirée sur une copie du board, <b>de la préparation à la fin du match</b> : rien n'est projeté pour de vrai.", info: 1, next: 'Commencer' },
+  { ch: 0, t: 'Un board pour vous, un écran pour la salle', x: "À gauche, le <b>déroulé</b> de la soirée. Au centre, deux aperçus : <b>En préparation</b>, que vous seul voyez, et <b>À l'antenne</b>, ce que voit le public. En haut, les chronos et le score. Sous les aperçus, les outils de l'impro en cours.", info: 1, en: () => { S.zones = true; }, lv: () => { S.zones = false; } },
+  { ch: 1, t: 'La fiche du match', x: 'Tout commence par la fiche : équipes, couleurs, joueurs, règlement. Ouvrez-la avec le sélecteur du haut.', tg: '[data-a=page][data-v=sheet]', ex: 'page', ok: v => v === 'sheet', demo: 'sheet', keys: '⌘1', foc: '#r-bar', do: () => { S.page = 'sheet'; } },
+  { ch: 1, t: 'Deux couleurs qui se distinguent', x: "Les Lynx sont en rouge et les Hiboux en orange : la fiche prévient qu'on les confondra depuis la salle. Choisissez une autre couleur pour l'<b>Équipe B</b>, les Hiboux.", tg: '#sw-b', ex: 'color', ok: v => v[0] === 'b', demo: 'b:blue', ds: '[data-v="b:blue"]', foc: '#sw-b',
+    do: v => { S.teams.b.c = v.split(':')[1]; toast(close('red', S.teams.b.c) ? 'Encore trop proche du rouge' : "L'alerte a disparu"); }, done: () => !close('red', S.teams.b.c), af: "La couleur suit l'équipe sur tous les écrans : accueil, vote, tableau des scores." },
+  { ch: 1, t: 'Règlement et contenus', x: "Deux autres onglets complètent la fiche. <b>Règlement</b> : périodes, alertes de fin de période, taille des textes, types de fautes, catégories. <b>Contenus</b> : affiche A4, sons, prochaines dates, réseaux sociaux (ils servent à l'écran « Merci »). Parcourez-les, puis continuez.", info: 1, en: () => { S.tab = 'regl'; }, lv: () => { S.tab = 'match'; } },
+  { ch: 1, t: 'Retour au board', x: "La fiche est prête. Passez au <b>Board</b>, par le sélecteur ou par « Aller au board » : c'est lui qui sert pendant la soirée.", tg: '[data-a=page][data-v=board]', ex: 'page', ok: v => v === 'board', demo: 'board', keys: '⌘2', foc: '#r-bar', do: () => { S.page = 'board'; } },
+  { ch: 2, t: 'Brancher le projecteur', x: "Le vidéoprojecteur est branché. Ouvrez le menu <b>Sortie</b> : c'est l'icône du projecteur, en haut à droite.", tg: '[data-a=menu]', ex: 'menu', foc: '.vg-tools', do: () => { S.menu = 'sortie'; } },
+  { ch: 2, t: "Choisir l'écran", x: 'Choisissez le vidéoprojecteur. Sans projecteur sous la main, « Fenêtre de test » permet de répéter.', tg: '#m-sortie', ex: 'output', demo: 'proj', ds: '[data-a=output]', foc: '.vg-tools',
+    do: () => { S.menu = null; S.out = true; }, af: "La sortie est ouverte, et l'écran reste noir tant que vous n'avez rien projeté. En salle, réglez ensuite l'image avec <b>Calage</b> <kbd>⌘K</kbd>, la dernière icône de la barre, et vérifiez la mire de lisibilité depuis le dernier rang." },
+  { ch: 2, t: 'Un chrono pour les arbitres', x: "Le public ne voit jamais le temps. Les arbitres et le MC le suivent sur la <b>Vue chrono</b> (l'icône du chronomètre), à ouvrir sur un <b>2e écran</b> : temps de la période, décompte de l'impro en cours, score et fautes, en grand.", info: 1, foc: '.vg-tools' },
+  { ch: 2, t: 'On prépare, puis on projette', x: "C'est la règle qui fait tout tenir. Pendant que la salle voit un écran, le board <b>prépare déjà le suivant</b> : vous seul le voyez, en jaune pointillé. <b>Projeter</b> l'envoie à l'antenne. Regardez la boucle d'une impro, ou cliquez sur les points pour choisir un moment.", info: 1, en: () => { S.schema = true; S.sk = 0; }, lv: () => { S.schema = false; }, next: 'Compris' },
+  { ch: 2, t: 'Préparer, puis projeter', x: "« Entrée du public » est en préparation : la salle ne voit encore rien. Envoyez-la à l'antenne avec le bouton rond <b>Projeter</b>.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('pub'); S.air = S.prep; prep('how', { k: 'how' }); }, af: "L'écran est à l'antenne, la ligne passe en <b>DIRECT</b> et la séquence suivante se prépare déjà. C'est le geste de toute la soirée." },
+  { ch: 2, t: 'Le Noir', x: "Un imprévu ? <b>Noir</b>, sous Projeter, fond l'écran au noir sans rien perdre. Appuyez une fois pour éteindre, une seconde fois pour rallumer.", tg: '[data-a=black]', ex: 'black', keys: '⌘B', foc: '#r-prev',
+    do: () => { S.black = !S.black; S.nb++; }, done: () => !S.black && S.nb >= 2, af: "L'image revient telle qu'elle était. Le Noir sert aussi entre deux séquences, pour laisser la scène aux joueurs." },
+  { ch: 3, t: "Dérouler l'ouverture", x: "Accueil, présentation, échauffement, entrée de l'arbitre puis des équipes, hymnes : chaque séquence suit le même geste, <b>préparer, puis Projeter</b>. Les hymnes s'activent ou se désactivent dans la fiche. Faisons avancer le déroulé jusqu'au début de la 1re période.", info: 1, foc: '#r-prev',
+    en: () => { S.seqs.slice(0, 6).forEach(q => { q.st = 'done'; }); live('hb'); S.air = { k: 'anthem', c: 'b' }; prep('p1', { k: 'title', t: '1RE PÉRIODE', sub: "C'EST PARTI !" }); } },
+  { ch: 3, t: 'Ouvrir la période', x: "Projetez la <b>1re période</b> : un écran de titre, avec le score.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('p1'); S.air = S.prep; addImpro(1, 'p1'); S.card = newCard(); prep('c1', null); }, af: "La première impro est créée d'office, et sa carte vous attend. Au début de chaque période, la <b>Sirène</b> <kbd>⌥⌘S</kbd> (la cloche, à gauche de la barre) donne le coup d'envoi. Les impros suivantes s'ajoutent avec « + Ajouter une impro »." },
+  { ch: 4, t: 'Remplir la carte', x: "L'arbitre annonce : « Improvisation mixte, ayant pour thème… ». La carte suit cet ordre. Tapez le <b>thème</b>, ou choisissez-en un : l'aperçu suit chaque lettre.", tg: '#vg-title', ex: 'title', demo: 'La dernière valise', foc: '#r-work', chips: ['La dernière valise', 'Un lundi sur Mars'],
+    do: v => { S.card.title = v; }, done: () => S.card.title.trim().length >= 3, af: 'Le public ne voit toujours rien : la carte est seulement en préparation. À droite, la tuile « Joueurs en jeu » est éteinte, et la bande jaune du milieu dit déjà ce que Projeter montrera.' },
+  { ch: 4, t: 'La durée', x: "L'arbitre annonce trois minutes. Choisissez <b>3 min</b> dans les durées rapides.", tg: '#vg-durs', ex: 'dur', ok: v => v === '3', demo: '3', ds: '[data-a=dur][data-v="3"]', foc: '#r-work', do: () => { S.card.dur = 180; } },
+  { ch: 4, t: "Annoncer l'impro", x: "La carte est complète. Projetez-la au moment où l'arbitre l'annonce.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('c1'); S.air = { k: 'impro', n: 1, card: snap() }; S.inPlay = true; prep('v1', { k: 'vote', card: snap() }); }, af: "La carte est à l'antenne. Le <b>vote</b> est déjà en préparation, la carte devient un résumé « ● DIRECT » à gauche, et les <b>Joueurs en jeu</b> s'activent à droite." },
+  { ch: 4, t: 'Qui joue ?', x: "Cochez les joueurs qui entrent en jeu, par exemple <b>Zoé</b>. Ce n'est jamais projeté : cela sert à l'historique et à l'Impro d'or.", tg: '[data-a=player][data-v="Zoé"]', ex: 'player', ok: v => v === 'Zoé', demo: 'Zoé', foc: '#r-work', do: v => { S.pl[v] = true; }, af: 'Chaque équipe a son compteur (1/3). On peut cocher et décocher jusqu’au score.' },
+  { ch: 4, t: "Le chrono de l'impro", x: "Lancez le chrono de l'impro, dans la carte du haut, au moment du « Top ! ».", tg: '[data-a=iclock]', ex: 'iclock', foc: '#r-clock', do: () => { S.improRun = true; }, af: "Il décompte la durée annoncée (ici 3:00). Une fois la durée dépassée, il passe en rouge et compte en « + ». Rien de tout cela n'est projeté." },
+  { ch: 4, t: 'Faute sifflée', x: "L'arbitre siffle les Lynx, qui ont déjà deux fautes. La zone « Faute sifflée par l'arbitre » est facultative : elle ne sert que s'il y a faute. Cliquez sur <b>+ Faute Lynx</b>.", tg: '[data-a=foulmenu][data-v=a]', ex: 'foulmenu', ok: v => v === 'a', demo: 'a', foc: '#r-work',
+    en: () => { S.past = [{ t: 'a', type: 'Retard de jeu', old: 1 }, { t: 'a', type: 'Obstruction', old: 1 }]; S.fouls.a = 2; }, do: () => { S.menu = 'foul'; } },
+  { ch: 4, t: 'Le type de faute', x: "Choisissez la faute annoncée par l'arbitre, par exemple <b>Cabotinage</b>. Si la raison n'a pas été comprise, le dernier choix, « À clarifier par l'arbitre », compte comme une faute ordinaire.", tg: '#m-types', ex: 'foultype', demo: 'Cabotinage', ds: '[data-v="Cabotinage"]', foc: '#r-work', do: v => { S.menu = null; S.pending = [{ t: 'a', type: v }]; } },
+  { ch: 4, t: 'Valider la faute', x: "Plusieurs fautes peuvent partir ensemble, pour une équipe ou pour les deux : elles comptent pour un seul coup de sifflet. Ici, il n'y en a qu'une : cliquez sur <b>Valider la faute sifflée</b>.", tg: '[data-a=whistle]', ex: 'whistle', foc: '#r-work',
+    do: () => { const f = S.pending[0]; S.past.push({ t: 'a', type: f.type, pt: 1 }); S.pending = []; S.fouls.a = 0; S.score.b = 1; S.notice = 'Faute pour Lynx · +1 point pour Hiboux'; prep('f1', { k: 'foul', team: 'a', type: f.type }); },
+    af: "C'est la 3e faute des Lynx : les Hiboux gagnent un point. Le score part en direct, sans passer par Projeter. L'écran des fautes est prêt et prend la place du vote." },
+  { ch: 4, t: 'Montrer la faute', x: "Projetez l'écran des fautes, pour que la salle comprenne d'où vient le point.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev', do: () => { live('f1'); S.air = S.prep; prep('v1', { k: 'vote', card: snap() }); }, af: "Le vote se prépare de nouveau. Si l'arbitre siffle encore, la faute reprend la place du vote, autant de fois que nécessaire." },
+  { ch: 4, t: 'Le vote', x: "Fin de l'impro. Le vote est déjà en préparation : projetez-le.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: 'Le score est caché pendant le vote, pour ne pas influencer la salle. L’interrupteur « Score et fautes en bandeau » de la bande jaune permet de le montrer pour ce vote seulement.' },
+  { ch: 4, t: 'Le résultat', x: "Les cartons sont levés, l'arbitre tranche. Cliquez sur l'équipe qui remporte le vote, ou sur Égalité.", tg: '#vg-res', ex: 'result', demo: 'b', ds: '[data-a=result][data-v=b]', foc: '#r-work',
+    do: v => { const from = Object.assign({}, S.score); if (v !== 'b') S.score.a++; if (v !== 'a') S.score.b++; const to = Object.assign({}, S.score); S.result = v; live('r1'); S.air = { k: 'point', res: v, from, to, card: snap() }; prep('t1', { k: 'board', res: v, from, to }); },
+    af: 'Un seul clic a compté le point et projeté le résultat : ici, pas besoin de Projeter.' },
+  { ch: 4, t: 'Le score', x: "Le tableau des scores est en préparation : la bande indique « ancien score → nouveau score ». Un vote mal compté se corrige ici, avant de projeter. Projetez le tableau : les volets tournent.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('t1'); S.air = S.prep; addImpro(2, 't1'); S.skip = true; prep('c2', { k: 'impro', n: 2, card: newCard() }); }, af: 'Une nouvelle carte est déjà prête. La boucle recommence : carte, vote, résultat, score.' },
+  { ch: 5, t: 'Le chrono de la période', x: 'Lancez le chrono de la période, dans la carte du haut. Pour la visite, le temps passe en accéléré.', tg: '[data-a=clock]', ex: 'clock', foc: '#r-clock', wait: 2500,
+    do: () => { S.run = true; S.remain = 900; S.alert = true; S.banner = true; } },
+  { ch: 5, t: "L'alerte des 15 minutes", x: "À 15 minutes de la fin, le chrono passe au jaune et un bandeau prévient la salle pendant 10 secondes. Cliquez sur l'alerte pour l'effacer.", tg: '[data-a=alert]', ex: 'alert', foc: '#r-clock',
+    do: () => { S.alert = false; S.banner = false; }, af: "Le temps n'est jamais affiché en permanence au public : seul le bandeau d'alerte le montre un instant (les alertes se règlent dans la fiche)." },
+  { ch: 5, t: 'Fin de la période', x: "La période se termine et il n'y a plus d'impro à jouer. Dans la carte vide de l'impro 2, cliquez sur <b>Pas d'autre impro</b>.", tg: '[data-a=skip]', ex: 'skip', foc: '#r-work',
+    do: () => { S.seqs = S.seqs.filter(q => !/^[icfvrt]2$/.test(q.id)); S.skip = false; S.notice = ''; prep('ent', { k: 'inter', sc: Object.assign({}, S.score) }); } },
+  { ch: 5, t: "Projeter l'entracte", x: "L'entracte est en préparation, avec le score à la mi-temps. Projetez-le.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: "Au retour, la 2e période se déroule comme la première : carte, fautes, vote, résultat, score." },
+  { ch: 5, t: 'La 2e période', x: "Passons directement à la fin de soirée : la 2e période est jouée, les Hiboux mènent 5 à 3. Le déroulé se termine par « Fin du match », puis « Remerciements ».", info: 1, foc: '#r-prev',
+    en: () => { live('p2'); S.air = { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: { a: 0, b: 1 } }; S.score = { a: 3, b: 5 }; S.fouls = { a: 0, b: 0 }; S.remain = 95; S.gold = true; prep('fin', { k: 'win', sc: { a: 3, b: 5 }, gold: 'La dernière valise' }); } },
+  { ch: 6, t: 'Fin du match', x: "La fin du match est en préparation : vainqueur, score final et <b>Impro d'or</b>. Projetez-la.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('fin'); S.air = S.prep; prep('mer', { k: 'merci' }); }, af: "L'Impro d'or se désigne par un clic droit sur une impro du déroulé (« Désigner comme Impro d'or ») : ici, la première. Un clic droit sur une étape déjà passée permet aussi de la <b>reprendre</b> (« Revenir à cette étape »)." },
+  { ch: 6, t: 'Remerciements', x: "Dernier écran : « Merci ! », les prochaines dates, et les réseaux sociaux avec leurs QR codes. Tout cela se règle dans l'onglet Contenus de la fiche. Projetez-le.", tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('mer'); S.air = S.prep; prep('mer', null); } },
+  { ch: 6, t: 'Enregistrer', x: 'Le match se garde dans un fichier <b>.impromatch</b> : fiche, impros, votes, fautes, chronos. Enregistrez-le.', tg: '#vg-save', ex: 'save', keys: '⌘S', save: 1,
+    do: () => { S.dirty = false; toast('Match enregistré'); }, af: "Même sans enregistrer, rien n'est perdu : chaque modification est sauvegardée une seconde plus tard. Après une coupure, ImproMatch rouvre le match tel quel, chronos compris." },
+  { ch: 6, t: 'À vous de jouer', x: 'Vous venez de dérouler une soirée. Les raccourcis à retenir :', info: 1, end: 1, en: () => { S.bravo = true; }, lv: () => { S.bravo = false; },
+    short: [['⌘↩', 'Projeter'], ['⌘B', 'Noir'], ['⌘→', 'Préparer la séquence suivante'], ['⌥⌘S', 'Sirène'], ['⌘K', 'Calage'], ['⌘S', 'Enregistrer']] },
+];
+
+// ---------- Moteur ----------
+// Chaque étape : soit on fait le geste soi-même (clic sur l'élément entouré), soit on clique sur Suivant,
+// et un curseur fait le geste à notre place. Dans les deux cas, on passe ensuite à l'étape suivante.
+const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+const later = (f, ms) => timers.push(setTimeout(f, ms));
+function toast(t) { if (quiet) return; const e = $('#vg-toast'); e.innerHTML = `<div class="toast">${esc(t)}</div>`; clearTimeout(toast.t); toast.t = setTimeout(() => { e.innerHTML = ''; }, 2200); }
+function runStep(s) { for (let i = 0; i < 4; i++) { s.do && s.do(s.demo); if (!s.done || s.done()) break; } }
+let busy = false, note = '';
+function go(n) {
+  clearTimers(); busy = false; quiet = true; S = init(); ie = 0; $('#vg-ghost').hidden = true;
+  for (let i = 0; i < n; i++) { const s = STEPS[i]; s.en && s.en(); runStep(s); s.lv && s.lv(); }
+  cur = n; note = n > 0 ? STEPS[n - 1].af || '' : ''; STEPS[n].en && STEPS[n].en(); done = !!STEPS[n].info;
+  render(); quiet = false; coach(); store();
+}
+function advance() {
+  if (cur >= STEPS.length - 1) return;
+  clearTimers(); busy = false; $('#vg-ghost').hidden = true;
+  const s = STEPS[cur]; s.lv && s.lv(); note = s.af || '';
+  cur++; STEPS[cur].en && STEPS[cur].en(); done = !!STEPS[cur].info; render(); coach(); store();
+}
+function next() {
+  const s = STEPS[cur];
+  if (s.end) { if (inApp) { try { localStorage.removeItem('impromatch-visite'); } catch (e) {} window.webkit.messageHandlers.tour.postMessage('close'); } else go(0); return; }
+  if (done) { advance(); return; }
+  if (!busy) showMe();
+}
+function store() { try { localStorage.setItem('impromatch-visite', String(cur)); } catch (e) {} }
+// Le geste de l'étape vient d'être fait : on montre le résultat un instant, puis on avance
+function finish() {
+  done = true; coach(true);
+  if (STEPS[cur].manual) return;
+  busy = true; later(advance, STEPS[cur].wait || 1100);
+}
+function nudge() { const r = $('#vg-ring'); r.classList.remove('no'); void r.offsetWidth; r.classList.add('no'); }
+function act(a, v) {
+  const s = STEPS[cur];
+  if (a === 'siren') { siren(); return; }
+  if (a === 'tab') { S.tab = v; render(); return; }
+  if (a === 'sch') { S.sk = +v; render(); return; }
+  if (a === 'title' && s.ex === 'title') { if (busy) return; s.do(v); render(); const ok = !!s.done(); if (ok !== done) { done = ok; coach(true); } return; }
+  if (busy || done || s.ex !== a || (s.ok && !s.ok(v))) { nudge(); return; }
+  s.do(v); render();
+  if (a === 'project') { const g = $('.pcol .go'); if (g) { g.classList.remove('fire'); void g.offsetWidth; g.classList.add('fire'); } }
+  if (!s.done || s.done()) finish();
+}
+function coach(keep) {
+  const s = STEPS[cur], c = $('#vg-copy');
+  const ids = STEPS.map((q, i) => i).filter(i => STEPS[i].ch === s.ch);
+  let body = note ? `<p class="vg-ok"><span>${note}</span></p>` : '';
+  body += `<p>${s.x}</p>`;
+  if (s.chips) body += `<div class="vg-chips">${s.chips.map(t => `<button type="button" data-chip="${esc(t)}">${esc(t)}</button>`).join('')}</div>`;
+  if (s.save) body += `<div><button type="button" class="vg-btn" id="vg-save">Enregistrer le match</button></div>`;
+  if (s.short) body += `<dl class="vg-short">${s.short.map(([k, l]) => `<dt><kbd>${k}</kbd></dt><dd>${l}</dd>`).join('')}</dl>`;
+  if (!s.info) body += done
+    ? `<p class="vg-hint ok">✓ <span>C'est fait.${s.manual ? ' Cliquez sur <b>Suivant</b>.' : ''}</span></p>`
+    : `<p class="vg-hint">${ic('arrow-right', 14, 2)}<span>À vous : ${s.ex === 'title' ? 'tapez dans le champ entouré de jaune' : 'cliquez sur l\'élément entouré de jaune'}${s.keys ? ` (ou <kbd>${s.keys}</kbd>)` : ''}. Ou cliquez sur <b>Suivant</b> pour voir le geste.</span></p>`;
+  c.innerHTML = `<p class="vg-eye">Chapitre ${s.ch + 1} sur ${CH.length}</p><h1>${CH[s.ch]}</h1><ol class="vg-steps">`
+    + ids.map((i, k) => { const q = STEPS[i], st = i < cur ? 'done' : i === cur ? 'cur' : 'todo';
+      return `<li class="${st}"><button type="button" data-go="${i}"><span class="n">${i < cur ? '✓' : k + 1}</span><span>${q.t}</span></button>${i === cur ? `<div class="vg-body" ${keep ? 'style="animation:none"' : ''}>${body}</div>` : ''}</li>`; }).join('') + '</ol>';
+  const nx = $('#vg-next'), bk = $('#vg-back');
+  bk.hidden = cur === 0;
+  nx.textContent = s.end ? (inApp ? 'Essayer maintenant' : 'Recommencer la visite') : (s.next || 'Suivant →');
+  nx.classList.toggle('pulse', done && !!s.manual);
+  $('#vg-prog').innerHTML = CH.map((n, i) => {
+    const all = STEPS.filter(q => q.ch === i).length, before = STEPS.slice(0, cur + (done ? 1 : 0)).filter(q => q.ch === i).length;
+    return `<button type="button" data-ch="${i}" class="${i === s.ch ? 'cur' : i < s.ch ? 'past' : ''}" aria-label="Chapitre ${i + 1} : ${n}"><span>${i + 1} · ${n}</span><i><b style="width:${100 * before / all}%"></b></i></button>`;
+  }).join('');
+  const li = c.querySelector('.vg-steps .cur'); if (li && !keep) li.scrollIntoView({ block: 'nearest' });
+  requestAnimationFrame(cam);
+}
+
+// Caméra : sur grand écran le board entier ; sur petit écran, zoom sur la zone de l'étape
+function cam() {
+  const view = $('#vg-view'), stage = $('#vg-stage'), v = view.getBoundingClientRect(), W = 1240, H = 880;
+  if (!v.width) return;
+  const fit = Math.min(v.width / W, v.height / H);
+  let sc = fit, tx = (v.width - W * sc) / 2, ty = (v.height - H * sc) / 2;
+  const f = STEPS[cur].foc, el = f && v.width < 700 ? stage.querySelector(f) : null;
+  if (el) {
+    const sr = stage.getBoundingClientRect(), k = sr.width / W, r = el.getBoundingClientRect();
+    if (r.width) {
+      const x = (r.left - sr.left) / k, y = (r.top - sr.top) / k, w = r.width / k, h = r.height / k;
+      sc = Math.max(fit, Math.min(v.width / Math.min(w + 20, f === '#r-prev' ? 960 : 620), v.height / (h + 20), 1.1));
+      const cl = (t, size, span) => size * sc <= span ? (span - size * sc) / 2 : Math.min(0, Math.max(span - size * sc, t));
+      let fx = x + w / 2, fy = y + h / 2; const tgt = STEPS[cur].tg && stage.querySelector(STEPS[cur].tg);
+      if (tgt) { const t = tgt.getBoundingClientRect(); if (w * sc > v.width) fx = (t.left + t.width / 2 - sr.left) / k; if (h * sc > v.height) fy = (t.top + t.height / 2 - sr.top) / k; }
+      tx = cl(v.width / 2 - fx * sc, W, v.width); ty = cl(v.height / 2 - fy * sc, H, v.height);
+    }
+  }
+  stage.style.transform = `translate(${tx}px,${ty}px) scale(${sc})`;
+}
+// Anneau sur la cible de l'étape
+function ring() {
+  const r = $('#vg-ring'), s = STEPS[cur], el = !done && s.tg ? $(s.tg) : null;
+  let show = false;
+  if (el) {
+    const b = el.getBoundingClientRect(), sc = el.closest('.vg-scroll'), box = (el.closest('.vg-coach') ? document.body : sc || $('#vg-view')).getBoundingClientRect();
+    const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    if (b.width && cx > box.left && cx < box.right && cy > box.top && cy < box.bottom) {
+      show = true; r.style.left = b.left - 5 + 'px'; r.style.top = b.top - 5 + 'px'; r.style.width = b.width + 6 + 'px'; r.style.height = b.height + 6 + 'px';
+    }
+  }
+  r.hidden = !show;
+  requestAnimationFrame(ring);
+}
+// Suivant sur une étape à geste : un curseur part du bouton et fait le geste, puis on avance
+function showMe() {
+  const s = STEPS[cur]; if (done || s.info) return;
+  const el = $(s.ds ? s.tg + ' ' + s.ds : s.tg) || $(s.tg);
+  if (!el) { runStep(s); render(); finish(); return; }
+  busy = true;
+  const g = $('#vg-ghost'), from = $('#vg-next').getBoundingClientRect(), to = el.getBoundingClientRect();
+  g.hidden = false; g.classList.remove('tap'); g.style.transition = 'none'; g.style.left = from.left + from.width / 2 + 'px'; g.style.top = from.top + 'px';
+  void g.getBoundingClientRect(); g.style.transition = ''; g.style.left = to.left + to.width / 2 + 'px'; g.style.top = to.top + to.height / 2 + 'px';
+  const tap = () => {
+    if (STEPS[cur] !== s) return;
+    g.classList.remove('tap'); void g.getBoundingClientRect(); g.classList.add('tap');
+    if (s.ex === 'title') {
+      const t = s.demo; let i = 0;
+      const ty = () => { if (STEPS[cur] !== s) return; i++; const inp = $('#vg-title'); if (inp) inp.value = t.slice(0, i); s.do(t.slice(0, i)); render();
+        if (i < t.length) later(ty, 45); else { g.hidden = true; done = true; coach(true); later(advance, 900); } };
+      ty(); return;
+    }
+    busy = false; act(s.ex, el.dataset.v || s.demo);
+    if (!done && STEPS[cur] === s) { busy = true; later(tap, 700); } else later(() => { g.hidden = true; }, 450);
+  };
+  later(tap, 650);
+}
+// Sirène : deux montées, synthétisées
+function siren() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; siren.c = siren.c || new AC();
+    const c = siren.c, o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(420, t); o.frequency.linearRampToValueAtTime(900, t + .45); o.frequency.linearRampToValueAtTime(420, t + .9); o.frequency.linearRampToValueAtTime(900, t + 1.35); o.frequency.linearRampToValueAtTime(380, t + 1.8);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.12, t + .05); g.gain.setValueAtTime(.12, t + 1.6); g.gain.linearRampToValueAtTime(0, t + 1.8);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + 1.85);
+  } catch (e) {}
+  toast('Sirène');
+}
+
+// ---------- Événements ----------
+$('#vg-stage').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) act(b.dataset.a, b.dataset.v); });
+$('#vg-stage').addEventListener('input', e => { if (e.target.id === 'vg-title') act('title', e.target.value); });
+$('#vg-copy').addEventListener('click', e => {
+  const c = e.target.closest('[data-chip]'); if (c) { const i = $('#vg-title'); if (i) i.value = c.dataset.chip; act('title', c.dataset.chip); }
+  if (e.target.closest('#vg-save')) act('save');
+  const g = e.target.closest('[data-go]'); if (g && +g.dataset.go !== cur) go(+g.dataset.go);
+});
+$('#vg-prog').addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (b) go(STEPS.findIndex(s => s.ch === +b.dataset.ch)); });
+$('#vg-back').addEventListener('click', () => go(Math.max(0, cur - 1)));
+$('#vg-next').addEventListener('click', next);
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase(), typing = e.target.tagName === 'INPUT';
+  if (mod && k === 'enter') { e.preventDefault(); act('project'); }
+  else if (mod && k === 'b') { e.preventDefault(); act('black'); }
+  else if (mod && k === 's') { e.preventDefault(); act('save'); }
+  else if (!mod && (k === 'enter' || (k === 'arrowright' && !typing)) && e.target.tagName !== 'BUTTON') { e.preventDefault(); next(); }
+  else if (!mod && k === 'arrowleft' && !typing && cur > 0) go(cur - 1);
+});
+window.addEventListener('resize', cam);
+if (window.ResizeObserver) new ResizeObserver(cam).observe($('#vg-view'));
+
+window.impromatchVisite = { act };
+let start = 0;
+try { start = Math.min(STEPS.length - 2, Math.max(0, parseInt(localStorage.getItem('impromatch-visite'), 10) || 0)); } catch (e) {}
+go(start);
+requestAnimationFrame(ring);
+})();
+</script>
