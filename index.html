@@ -320,13 +320,15 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .scr .s6 { font-weight: 600; } .scr .sec { color: #E8EBF0; } .scr .acc { color: var(--accent); }
 .scr .g { display: flex; align-items: center; justify-content: center; }
 .scr .poster { background: var(--panel); align-self: stretch; display: grid; place-items: center; }
-.scr .poster div { width: 440px; height: 622px; border: 3px dashed var(--line); border-radius: 8px; display: grid; place-items: center; font: 600 40px var(--display); letter-spacing: .1em; color: #E8EBF0; }
-.scr .chip { display: inline-flex; align-items: center; gap: 14px; font-size: 56px; padding: 10px 28px; border-radius: 99px; background: var(--panel); border: 2px solid #2A3140; white-space: nowrap; }
+/* Cartes sombres des écrans : bordure fine #2A3140 ; panneaux pleine hauteur : un filet sur le bord intérieur ; affiche aux coins de 24 px */
+.scr { --cb: #2A3140; }
+.scr .poster div { width: 440px; height: 622px; border: 3px dashed var(--line); border-radius: 24px; display: grid; place-items: center; font: 600 40px var(--display); letter-spacing: .1em; color: #E8EBF0; }
+.scr .chip { display: inline-flex; align-items: center; gap: 14px; font-size: 56px; padding: 10px 28px; border-radius: 99px; background: var(--panel); border: 2px solid var(--cb); white-space: nowrap; }
 .scr .chip svg { width: 46px; height: 46px; color: var(--accent); }
 .scr .nat { font-size: 44px; letter-spacing: .1em; background: var(--fg); color: var(--ink); border-radius: 8px; padding: 4px 20px; }
 .scr .fdots { display: flex; gap: 12px; } .scr .fdots i { width: 44px; height: 44px; border-radius: 50%; border: 4px solid var(--accent); box-sizing: border-box; } .scr .fdots i.on { background: var(--accent); }
 .scr .fdots.sm i { width: 34px; height: 34px; border-color: #C9CED8; } .scr .fdots.xs i { width: 30px; height: 30px; }
-.scr .hw { flex: 1; background: var(--panel); border-radius: 16px; padding: 36px 20px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.scr .hw { flex: 1; background: var(--panel); border: 2px solid var(--cb); border-radius: 16px; padding: 36px 20px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
 .scr .hw > :first-child { height: 80px; display: flex; align-items: center; gap: 8px; }
 .scr .vc { width: 250px; height: 250px; border-radius: 16px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 24px; box-sizing: border-box; font-size: 52px; color: var(--ink); animation: vc .7s cubic-bezier(.3,.6,.3,1.4) both; }
 @keyframes vc { from { transform: translateY(140px) rotate(0); opacity: 0; } }
@@ -466,7 +468,7 @@ function scrHTML(st) {
   const pill = (from, to, d) => `<div class="g pill"><span style="color:${ca}">${up(A.name)}</span>${fd2(from.a, to.a, d)}<span style="color:var(--line)">—</span>${fd2(from.b, to.b, d)}<span style="color:${cb}">${up(B.name)}</span></div>`;
   const head = c => `<div class="s6 sec" style="font-size:44px;letter-spacing:.06em">IMPRO 1${c && c.title ? ' · ' + up(c.title) : ''}</div>`;
   switch (st.k) {
-    case 'welcome': return `<div style="display:flex;width:100%;height:100%"><div class="poster" style="width:500px"><div>AFFICHE A4</div></div>
+    case 'welcome': return `<div style="display:flex;width:100%;height:100%"><div class="poster" style="width:500px;border-right:2px solid var(--cb)"><div>AFFICHE A4</div></div>
       <div class="rise" style="flex:1;display:flex;flex-direction:column;gap:14px;align-items:flex-start;justify-content:center;padding:0 56px;text-align:left"><div class="s6 sec" style="font-size:44px;letter-spacing:.08em">MATCH D'IMPROVISATION</div>
       <div style="font-size:96px;color:${ca};margin-top:16px">${up(A.name)}</div><div class="s6 sec" style="font-size:48px">VS</div><div style="font-size:96px;color:${cb}">${up(B.name)}</div>
       <div class="s6" style="font-size:44px;margin-top:24px">SALLE DES FÊTES</div><div class="acc" style="font-size:48px;letter-spacing:.05em;margin-top:12px">LE MATCH VA COMMENCER</div></div></div>`;
@@ -498,25 +500,25 @@ function scrHTML(st) {
     case 'board': return `<div style="display:flex;flex-direction:column;gap:28px;align-items:center;width:100%"><div class="s6 sec" style="font-size:44px;letter-spacing:.08em">TABLEAU DES SCORES</div>
       <div class="g" style="gap:48px;align-items:flex-start;width:100%">${['a', 'b'].map(s => `<div style="flex:1;display:flex;flex-direction:column;gap:16px;align-items:center">
         <div style="font-size:64px;color:${col(s)}">${up(S.teams[s].name)}</div>
-        <div style="font-size:170px;padding:16px;background:var(--panel);border-radius:20px;box-shadow:inset 0 -6px 0 ${col(s)}">${fd2(st.from[s], st.to[s], s === 'a' ? .8 : 1.1)}</div>
+        <div style="font-size:170px;padding:16px;background:var(--panel);border:2px solid var(--cb);border-radius:20px;box-shadow:inset 0 -6px 0 ${col(s)}">${fd2(st.from[s], st.to[s], s === 'a' ? .8 : 1.1)}</div>
         <div class="g" style="gap:14px"><span class="sec" style="font-size:40px">FAUTES</span>${dots(0, 'sm')}</div></div>`).join('')}</div>
       <div class="g" style="width:60px;height:60px;border-radius:10px;font-size:40px;color:var(--ink);margin-top:10px;background:${st.res === 'tie' ? 'var(--soft)' : col(st.res)}">1</div></div>`;
     case 'win': { const sc = st.sc, w = sc.a > sc.b ? 'a' : 'b', wc = col(w);
       return `<div style="display:flex;width:100%;height:100%"><div class="rise" style="flex:1;position:relative;display:flex;flex-direction:column;gap:24px;align-items:flex-start;justify-content:center;padding:0 64px;text-align:left"><i style="position:absolute;left:0;top:0;bottom:0;width:12px;background:${wc}"></i>
       <div class="s6 sec" style="font-size:44px;letter-spacing:.08em">FIN DU MATCH</div><div style="font-size:56px;letter-spacing:.05em">VICTOIRE DE</div><div style="font-size:110px;color:${wc}">${up(S.teams[w].name)}</div>
       <div class="g" style="gap:28px"><span style="font-size:110px;color:${ca}">${sc.a}</span><span style="font-size:56px;color:var(--line)">—</span><span style="font-size:110px;color:${cb}">${sc.b}</span></div></div>
-      ${st.gold ? `<div style="width:560px;background:var(--panel);display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;padding:36px;box-sizing:border-box"><div class="acc" style="font-size:96px">★</div><div class="acc" style="font-size:60px;letter-spacing:.1em">IMPRO D'OR</div><div class="s6 sec" style="font-size:42px">IMPRO 1 · LIBRE</div><div style="font-size:64px">${up(st.gold)}</div></div>` : ''}</div>`; }
+      ${st.gold ? `<div style="width:560px;background:var(--panel);border-left:2px solid var(--cb);display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;padding:36px;box-sizing:border-box"><div class="acc" style="font-size:96px">★</div><div class="acc" style="font-size:60px;letter-spacing:.1em">IMPRO D'OR</div><div class="s6 sec" style="font-size:42px">IMPRO 1 · LIBRE</div><div style="font-size:64px">${up(st.gold)}</div></div>` : ''}</div>`; }
     case 'merci': { const qr = 'width:150px;height:150px;border:10px solid #fff;box-sizing:border-box;background:repeating-conic-gradient(#000 0 25%,#fff 0 50%) 0 0/30px 30px';
       return `<div style="display:flex;width:100%;height:100%"><div class="rise" style="flex:1;position:relative;display:flex;flex-direction:column;gap:30px;align-items:flex-start;justify-content:center;padding:0 48px 0 64px;text-align:left"><i style="position:absolute;left:0;top:0;bottom:0;width:12px;background:var(--accent)"></i>
       <div><div class="acc" style="font-size:150px">MERCI !</div><div class="s6" style="font-size:44px;letter-spacing:.03em;margin-top:6px">AUX JOUEURS, AUX ARBITRES, AUX MUSICIENS… ET À VOUS !</div></div>
       <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><span style="font-size:44px;letter-spacing:.08em;background:var(--accent);color:var(--ink);padding:2px 18px;border-radius:8px">PROCHAINE DATE</span><span class="s6" style="font-size:52px">SAMEDI 12 DÉCEMBRE</span></div></div>
-      <div style="width:600px;background:var(--panel);display:flex;flex-direction:column;gap:26px;align-items:flex-start;justify-content:center;padding:0 48px;box-sizing:border-box;text-align:left"><div style="font-size:56px;letter-spacing:.08em">SUIVEZ-NOUS</div>
+      <div style="width:600px;background:var(--panel);border-left:2px solid var(--cb);display:flex;flex-direction:column;gap:26px;align-items:flex-start;justify-content:center;padding:0 48px;box-sizing:border-box;text-align:left"><div style="font-size:56px;letter-spacing:.08em">SUIVEZ-NOUS</div>
       ${['@LYNX.IMPRO', '@HIBOUX.IMPRO'].map(t => `<div class="g" style="gap:24px"><i style="${qr}"></i><span class="s6" style="font-size:44px">${t}</span></div>`).join('')}</div></div>`; }
     case 'inter': return `<div style="display:flex;width:100%;height:100%"><div class="rise" style="flex:1;display:flex;flex-direction:column;gap:28px;align-items:flex-start;justify-content:center;padding:0 56px;text-align:left">
       <div style="font-size:140px">ENTRACTE</div><div class="acc g" style="font-size:56px;gap:14px">${ic('glass-half', 56)}LE BAR EST OUVERT !</div><i style="width:120px;height:2px;background:var(--line)"></i>
       <div class="s6 sec" style="font-size:44px;letter-spacing:.08em">SCORE À LA MI-TEMPS</div>
       <div class="g" style="gap:32px;text-align:center">${['a', 'b'].map(s => `<div><div style="font-size:120px;color:${col(s)}">${st.sc[s]}</div><div style="font-size:48px;color:${col(s)}">${up(S.teams[s].name)}</div></div>`).join('<span style="font-size:60px;color:var(--line)">—</span>')}</div></div>
-      <div class="poster" style="width:528px"><div>AFFICHE A4</div></div></div>`;
+      <div class="poster" style="width:528px;border-left:2px solid var(--cb)"><div>AFFICHE A4</div></div></div>`;
   }
   return '';
 }
