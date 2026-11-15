@@ -757,7 +757,7 @@ function renderBoard() {
   if (stg == null) w += `<p class="muted" style="margin:0;font-size:13.5px">Séquence « ${esc((seq(S.sel) || {}).l || '')} » : rien à saisir. Projetez-la avec ⌘↩.</p>`;
   // Fin du match et Remerciements : la feuille de match en PDF, comme l'app
   if (S.sel === 'fin' || S.sel === 'mer') w += `<div class="tile" style="flex-direction:row;align-items:center;gap:14px;margin-top:12px">${ic('page', 26)}<div style="flex:1;min-width:0"><b style="font-size:14px">Feuille de match</b><div class="muted" style="font-size:12.5px;white-space:normal">Un PDF A4 du match : équipes, score par période, impros avec qui a joué et qui était lead, votes, fautes et Impro d'or, avec la place pour les étoiles, les remarques et les signatures.</div></div><button type="button" class="btn" data-a="report" style="background:var(--tq);color:#0A0A0A;font-weight:600">${ic('page', 14)}Exporter en PDF…</button></div>`;
-  else {
+  else if (stg != null) {
     const nbn = (lead, title, detail, extra) => `<div class="nbn"><div><small>${lead}</small><b>${title}</b></div>${extra || (detail ? `<em>${detail}</em>` : '')}</div>`;
     const cst = (seq('c' + n) || {}).st, plOn = cst === 'live' || cst === 'done';
     const mine = S.past.filter(p => !p.old);
