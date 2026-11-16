@@ -756,8 +756,8 @@ function renderBoard() {
   if (!S.banner && ban) ban.remove();
   $('#vg-blk').classList.toggle('on', S.black);
   put('#r-pcol', `<button type="button" class="go" data-a="project" aria-label="Projeter" ${S.prep ? '' : 'disabled'}>${ic('arrow-right', 22, 1.8)}</button><b>Projeter</b><small>⌘↩</small>
-    <button type="button" class="nb" data-a="black" aria-label="${S.black ? 'Rallumer' : 'Noir'}">${ic(S.black ? 'sun-light' : 'half-moon', 16)}</button><span>${S.black ? 'Rallumer' : 'Noir'}</span>
-    <button type="button" class="nb" data-a="x" id="vg-undo" aria-label="Annuler la projection" title="Annuler la projection (⌘⌫)" ${S.air ? '' : 'disabled'}>${ic('undo', 16)}</button><span class="${S.air ? '' : 'off'}">Annuler</span>`);
+    <button type="button" class="nb" data-a="x" id="vg-undo" aria-label="Annuler la projection" title="Annuler la projection (⌘⌫)" ${S.air ? '' : 'disabled'}>${ic('undo', 16)}</button><span class="${S.air ? '' : 'off'}">Annuler</span>
+    <button type="button" class="nb" data-a="black" aria-label="${S.black ? 'Rallumer' : 'Noir'}">${ic(S.black ? 'sun-light' : 'half-moon', 16)}</button><span>${S.black ? 'Rallumer' : 'Noir'}</span>`);
   // Centre : fil d'étapes, puis trois tuiles fixes (Carte · étape en préparation · Joueurs en jeu), comme l'app
   const stg = { c1: 0, f1: 1, v1: 2, r1: 3, c2: 0 }[S.sel];
   let w = S.notice ? `<div class="notice">${ic('triangle-flag', 15)}${esc(S.notice)}</div>` : '';
@@ -877,10 +877,10 @@ const STEPS = [
       "Regardez la boucle d'une impro, ou cliquez sur les points pour choisir un moment."], en: () => { S.schema = true; S.sk = 0; }, lv: () => { S.schema = false; }, next: 'Compris' },
   { ch: 2, t: 'Préparer, puis projeter', x: ["« Entrée du public » est en préparation : la salle ne voit encore rien.", "Envoyez-la à l'antenne avec le bouton rond <b>Projeter</b>."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
     do: () => { live('pub'); S.air = S.prep; prep('how', { k: 'how' }); }, af: ["L'écran est à l'antenne : la ligne passe en <b>DIRECT</b>.", "La séquence suivante se prépare déjà.", "C'est le geste de toute la soirée."] },
-  { ch: 2, t: 'Le Noir', x: ["Un imprévu ? <b>Noir</b> (sous Projeter) fond l'écran au noir, sans rien perdre.", "Un appui pour éteindre, un second pour rallumer."], tg: '[data-a=black]', ex: 'black', keys: '⌘B', foc: '#r-prev',
+  { ch: 2, t: 'Le Noir', x: ["Un imprévu ? <b>Noir</b> (sous Annuler) fond l'écran au noir, sans rien perdre.", "Un appui pour éteindre, un second pour rallumer."], tg: '[data-a=black]', ex: 'black', keys: '⌘B', foc: '#r-prev',
     do: () => { S.black = !S.black; S.nb++; }, done: () => !S.black && S.nb >= 2, af: ["L'image revient telle qu'elle était.", "Le Noir sert aussi entre deux séquences, pour laisser la scène aux joueurs."] },
   { ch: 2, t: 'Annuler la projection', info: 1, foc: '#r-pcol', x: [
-      "Projeté trop vite ? <b>Annuler</b>, sous Noir (<kbd>⌘⌫</kbd>), revient à l'écran d'avant.",
+      "Projeté trop vite ? <b>Annuler</b>, juste sous Projeter (<kbd>⌘⌫</kbd>), revient à l'écran d'avant.",
       "L'étape d'avant redevient « DIRECT », celle-ci est de nouveau en préparation.",
       "Votes, fautes et score ne bougent pas.",
       "Un seul niveau : ensuite, le bouton est grisé."] },
