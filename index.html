@@ -149,10 +149,13 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .clock .sep { width: 1px; height: 52px; background: var(--hair); margin: 0 12px; flex: none; }
 .clock .b { font-size: 11px; padding: 3px 7px; }
 #vg-clk { font: 700 27px var(--mono); width: 92px; } #vg-clk.warn { color: #FFD60A; } #vg-clk.crit { color: var(--live); }
-.ic2 { font: 600 20px var(--mono); width: 140px; white-space: nowrap; }
+.ic2 { font: 600 20px var(--mono); width: 140px; white-space: nowrap; } .ic2.run { color: var(--accent); }
 .alert { background: #FFD60A !important; color: #000; font-weight: 600; animation: vg-pop .25s ease-out both; }
-.scz { width: 220px; flex: none; display: flex; flex-direction: column; gap: 5px; }
-.scz div { display: flex; align-items: center; gap: 8px; } .scz .nm { flex: 1; font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+.scz { flex: none; display: flex; align-items: flex-end; gap: 10px; }
+.scz .nms { display: flex; flex-direction: column; gap: 2px; width: 78px; } .scz .nm { height: 26px; display: flex; align-items: center; font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+.scz .bx { background: rgba(255,255,255,.05); border-radius: 9px; padding: 4px 6px 3px; display: flex; flex-direction: column; gap: 2px; }
+.scz .bx h6 { margin: 0; font-size: 9px; font-weight: 700; letter-spacing: .08em; color: var(--dim); padding-left: 4px; } .scz .bx.c h6 { text-align: center; padding-left: 0; }
+.scz .bx > div { height: 26px; display: flex; align-items: center; gap: 4px; } .scz .fm { color: var(--dim); display: flex; align-items: center; gap: 5px; padding: 0 4px; }
 .scz .d { display: flex; gap: 3px; } .scz .d i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.22); } .scz .d i.on { background: #FFD60A; }
 .scz .n { font: 700 20px ui-rounded, var(--ui); width: 28px; text-align: center; font-variant-numeric: tabular-nums; display: inline-block; }
 .scz .n.bump { animation: vg-bump .6s cubic-bezier(.2,.8,.2,1); }
@@ -175,6 +178,7 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .pcol .go.fire { animation: vg-fire .5s ease-out; } @keyframes vg-fire { 40% { transform: scale(1.25); box-shadow: 0 0 0 10px rgba(255,212,121,.3); } }
 .pcol .nb { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--ctl); margin-top: 10px; display: grid; place-items: center; }
 .pcol small { color: var(--dim); font-size: 10px; }
+.pcol .nb:disabled { opacity: .4; } .pcol span.off { color: var(--dim); }
 /* Centre : outils de l'étape */
 .work { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
 .work > * { flex: none; }
@@ -712,7 +716,7 @@ function renderBoard() {
   const CER = ['how', 'ech', 'arb', 'eq', 'ha', 'hb'], ENDS = ['ent', 'p2', 'fin', 'mer'];
   const grpH = (t, items, det) => {
     const rows = items.filter(q => !q.add && !q.hd), st = rows.some(q => q.st === 'live') ? 'live' : rows.every(q => q.st === 'done') ? 'done' : 'pend';
-    return `<div class="row grp"><span class="chev">${ic(CHEV, 12, 2.2)}</span>${stI(st)}${t}${st === 'live' ? '<em>DIRECT</em>' : `<small>${det}</small>`}</div><div class="gbody">${items.map(rowH).join('')}</div>`;
+    return `<div class="row grp"><span class="chev">${ic(CHEV, 12, 2.2)}</span>${stI(st)}${t}<small>${det}</small></div><div class="gbody">${items.map(rowH).join('')}</div>`;
   };
   let html = '', i = 0; const L = S.seqs;
   while (i < L.length) {
@@ -730,13 +734,15 @@ function renderBoard() {
   put('#r-foot', `<button type="button" class="b lg" data-a="x">${ic(CHEV, 13, 2)}Suivante</button>`);
   if (render.sel !== S.sel) { render.sel = S.sel; see($('#r-list .row.sel')); }
   // Chronos et score
-  const c = S.card, n = S.sel === 'c2' ? 2 : 1, ilab = c ? (n === 2 ? 'Impro 2' : 'Impro 1' + (c.title ? ' · ' + esc(c.title) : '')) : 'Impro';
+  const c = S.card, n = S.sel === 'c2' ? 2 : 1, ilab = warm() ? 'Échauffement' : c ? (n === 2 ? 'Impro 2' : 'Impro 1' + (c.title ? ' · ' + esc(c.title) : '')) : 'Impro';
   const lancer = (a, run) => `<button type="button" class="b" data-a="${a}" style="width:68px;justify-content:center">${ic(run ? 'pause' : 'play', 12)}${run ? 'Pause' : 'Lancer'}</button>`;
   const reset = `<button type="button" class="b" data-a="x" title="Remettre à zéro" aria-label="Remettre à zéro">${ic('refresh', 12)}</button>`;
   put('#r-clock', `<div class="z"><div><span class="lab">1re période</span>${S.alert ? `<button type="button" class="b alert" data-a="alert">${ic('bell', 12)}Plus que 15 min</button>` : ''}</div>
       <div><span id="vg-clk"></span>${lancer('clock', S.run)}<button type="button" class="b" data-a="x">−1 min</button><button type="button" class="b" data-a="x">+1 min</button>${reset}</div></div>
-    <i class="sep"></i><div class="z"><span class="lab">${ilab}</span><div><span class="ic2"><span id="vg-ie">${ieText()}</span></span>${lancer('iclock', S.improRun)}${reset}</div></div>
-    <i class="sep"></i><div class="scz">${['a', 'b'].map(s => `<div><span class="nm" style="color:${col(s)}">${esc(S.teams[s].name)}</span><span class="d">${[0, 1, 2].map(i => `<i class="${i < S.fouls[s] ? 'on' : ''}"></i>`).join('')}</span><span class="pm">${ic('minus', 13)}</span><span class="n" data-n="${S.score[s]}">${S.score[s]}</span><span class="pm">${ic('plus', 13)}</span></div>`).join('')}</div><span class="hist" style="display:flex;flex-direction:column;gap:7px"><span title="Remettre le score à zéro" style="color:var(--live)">${ic('restart', 17)}</span><span title="Historique des points">${ic('clock-rotate-right', 17)}</span></span>`);
+    <i class="sep"></i><div class="z"><span class="lab">${ilab}</span><div><span class="ic2${S.improRun ? ' run' : ''}"><span id="vg-ie">${ieText()}</span></span>${lancer('iclock', S.improRun)}${reset}</div></div>
+    <i class="sep"></i><div class="scz"><div class="nms">${['a', 'b'].map(s => `<span class="nm" style="color:${col(s)}">${esc(S.teams[s].name)}</span>`).join('')}</div>
+      <div class="bx"><h6>FAUTES</h6>${['a', 'b'].map(s => `<div><span class="fm" title="Cliquer pour corriger les fautes"><span class="d">${[0, 1, 2].map(i => `<i class="${i < S.fouls[s] ? 'on' : ''}"></i>`).join('')}</span>${ic(CHEV, 10, 2.2)}</span></div>`).join('')}</div>
+      <div class="bx c"><h6>SCORE</h6>${['a', 'b'].map(s => `<div><span class="pm">${ic('minus', 13)}</span><span class="n" data-n="${S.score[s]}">${S.score[s]}</span><span class="pm">${ic('plus', 13)}</span></div>`).join('')}</div></div><span class="hist" style="display:flex;flex-direction:column;gap:7px"><span title="Remettre le score à zéro" style="color:var(--live)">${ic('restart', 17)}</span><span title="Historique des points">${ic('clock-rotate-right', 17)}</span></span>`);
   document.querySelectorAll('.scz .n').forEach((e, i) => { const k = 'sc' + i; if (render[k] != null && render[k] !== e.dataset.n && !quiet) { e.classList.remove('bump'); void e.offsetWidth; e.classList.add('bump'); } render[k] = e.dataset.n; });
   clockTo(S.remain);
   // Aperçus
@@ -750,7 +756,8 @@ function renderBoard() {
   if (!S.banner && ban) ban.remove();
   $('#vg-blk').classList.toggle('on', S.black);
   put('#r-pcol', `<button type="button" class="go" data-a="project" aria-label="Projeter" ${S.prep ? '' : 'disabled'}>${ic('arrow-right', 22, 1.8)}</button><b>Projeter</b><small>⌘↩</small>
-    <button type="button" class="nb" data-a="black" aria-label="${S.black ? 'Rallumer' : 'Noir'}">${ic(S.black ? 'sun-light' : 'half-moon', 16)}</button><span>${S.black ? 'Rallumer' : 'Noir'}</span>`);
+    <button type="button" class="nb" data-a="black" aria-label="${S.black ? 'Rallumer' : 'Noir'}">${ic(S.black ? 'sun-light' : 'half-moon', 16)}</button><span>${S.black ? 'Rallumer' : 'Noir'}</span>
+    <button type="button" class="nb" data-a="x" id="vg-undo" aria-label="Annuler la projection" title="Annuler la projection (⌘⌫)" ${S.air ? '' : 'disabled'}>${ic('undo', 16)}</button><span class="${S.air ? '' : 'off'}">Annuler</span>`);
   // Centre : fil d'étapes, puis trois tuiles fixes (Carte · étape en préparation · Joueurs en jeu), comme l'app
   const stg = { c1: 0, f1: 1, v1: 2, r1: 3, c2: 0 }[S.sel];
   let w = S.notice ? `<div class="notice">${ic('triangle-flag', 15)}${esc(S.notice)}</div>` : '';
@@ -806,7 +813,9 @@ function renderBoard() {
 // Chrono : défile en accéléré quand la valeur saute, sinon seconde par seconde
 let shown = 2700, tween = 0, ie = 0;
 // Chrono d'impro : décompte de la durée annoncée (comme l'app)
-function ieText() { return S.sel === 'c2' || !S.card ? '0:00' : mmss(Math.max(0, S.card.dur - ie)); }
+// Échauffement préparé, ou à l'antenne sans étape d'impro préparée : le chrono du haut le décompte (5 min).
+function warm() { const live = S.seqs.find(q => q.st === 'live'); return S.sel === 'ech' || (live && live.id === 'ech' && !/^[cfvr]\d$/.test(S.sel)); }
+function ieText() { return warm() ? mmss(Math.max(0, 300 - ie)) : S.sel === 'c2' || !S.card ? '0:00' : mmss(Math.max(0, S.card.dur - ie)); }
 function drawClock() { const e = $('#vg-clk'); if (!e) return; e.textContent = mmss(shown); e.className = shown <= 300 ? 'crit' : shown <= 900 ? 'warn' : ''; }
 function clockTo(v) {
   cancelAnimationFrame(tween); tween = 0;
@@ -870,9 +879,15 @@ const STEPS = [
     do: () => { live('pub'); S.air = S.prep; prep('how', { k: 'how' }); }, af: ["L'écran est à l'antenne : la ligne passe en <b>DIRECT</b>.", "La séquence suivante se prépare déjà.", "C'est le geste de toute la soirée."] },
   { ch: 2, t: 'Le Noir', x: ["Un imprévu ? <b>Noir</b> (sous Projeter) fond l'écran au noir, sans rien perdre.", "Un appui pour éteindre, un second pour rallumer."], tg: '[data-a=black]', ex: 'black', keys: '⌘B', foc: '#r-prev',
     do: () => { S.black = !S.black; S.nb++; }, done: () => !S.black && S.nb >= 2, af: ["L'image revient telle qu'elle était.", "Le Noir sert aussi entre deux séquences, pour laisser la scène aux joueurs."] },
+  { ch: 2, t: 'Annuler la projection', info: 1, foc: '#r-pcol', x: [
+      "Projeté trop vite ? <b>Annuler</b>, sous Noir (<kbd>⌘⌫</kbd>), revient à l'écran d'avant.",
+      "L'étape d'avant redevient « DIRECT », celle-ci est de nouveau en préparation.",
+      "Votes, fautes et score ne bougent pas.",
+      "Un seul niveau : ensuite, le bouton est grisé."] },
   { ch: 3, t: "Dérouler l'ouverture", info: 1, foc: '#r-prev', x: [
       "Accueil, présentation, échauffement, arbitre, équipes, hymnes…",
       "Chaque séquence suit le même geste : <b>préparer, puis Projeter</b>.",
+      "Pendant l'<b>échauffement</b>, le chrono du haut le décompte (5 min, réglable dans le règlement), sans rien montrer au public.",
       "Les hymnes s'activent ou se désactivent dans la fiche.",
       "On avance le déroulé jusqu'au début de la 1re période."],
     en: () => { S.seqs.slice(0, 6).forEach(q => { q.st = 'done'; }); live('hb'); S.air = { k: 'anthem', c: 'b' }; prep('p1', { k: 'title', t: '1RE PÉRIODE', sub: "C'EST PARTI !" }); } },
@@ -892,7 +907,7 @@ const STEPS = [
   { ch: 4, t: 'Le type de faute', x: ["Choisissez la faute annoncée par l'arbitre, par exemple <b>Cabotinage</b>.", "Raison non comprise ? « À clarifier par l'arbitre » compte comme une faute ordinaire."], tg: '#m-types', ex: 'foultype', demo: 'Cabotinage', ds: '[data-v="Cabotinage"]', foc: '#r-work', do: v => { S.menu = null; S.pending = [{ t: 'a', type: v }]; } },
   { ch: 4, t: 'Valider la faute', x: ["Plusieurs fautes peuvent partir ensemble, pour une équipe ou pour les deux : un seul coup de sifflet.", "Ici, une seule : cliquez sur <b>Valider la faute sifflée</b>."], tg: '[data-a=whistle]', ex: 'whistle', foc: '#r-work',
     do: () => { const f = S.pending[0]; S.past.push({ t: 'a', type: f.type, pt: 1 }); S.pending = []; S.fouls.a = 0; S.score.b = 1; S.notice = 'Faute pour Lynx · +1 point pour Hiboux'; prep('f1', { k: 'foul', team: 'a', type: f.type }); },
-    af: ["3e faute des Lynx : les Hiboux gagnent un point.", "Le score part en direct, sans passer par Projeter.", "L'écran des fautes est prêt et prend la place du vote."] },
+    af: ["3e faute des Lynx : les Hiboux gagnent un point.", "Le score part en direct, sans passer par Projeter.", "Un compteur à corriger ? Un clic sur les points de la case <b>FAUTES</b>, en haut, ouvre la liste : aucune, 1, 2 ou 3 fautes. Tout va dans l'historique des points.", "L'écran des fautes est prêt et prend la place du vote."] },
   { ch: 4, t: 'Montrer la faute', x: ["Projetez l'écran des fautes.", "La salle comprend d'où vient le point."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev', do: () => { live('f1'); S.air = S.prep; prep('v1', { k: 'vote', card: snap() }); }, af: ["Le vote se prépare de nouveau.", "Si l'arbitre siffle encore, la faute reprend la place du vote, autant de fois que nécessaire."] },
   { ch: 4, t: 'Le vote', x: ["Fin de l'impro.", "Le vote est déjà en préparation : projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
     do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: ['Le score est caché pendant le vote, pour ne pas influencer la salle.', "Pour le montrer : l'interrupteur « Score et fautes en bandeau » de la bande jaune (ce vote seulement)."] },
@@ -924,8 +939,13 @@ const STEPS = [
     do: () => { live('mer'); S.air = S.prep; prep('mer', null); } },
   { ch: 6, t: 'Enregistrer', x: ['Le match se garde dans un fichier <b>.impromatch</b> : fiche, impros, votes, fautes, chronos.', 'Enregistrez-le.'], tg: '#vg-save', ex: 'save', keys: '⌘S', save: 1,
     do: () => { S.dirty = false; toast('Match enregistré'); }, af: ["Même sans enregistrer, rien n'est perdu : chaque modification est sauvegardée une seconde plus tard.", "Après une coupure, Impro Match rouvre le match tel quel, chronos compris.", "La <b>feuille de match</b> en PDF A4 (⇧⌘E, ou le bouton des étapes Fin du match et Remerciements) : score par période, déroulé avec qui a joué et qui était lead, fautes, Impro d'or ; à imprimer, faire signer, envoyer."] },
+  { ch: 6, t: 'Rejouer le même match', info: 1, foc: '#r-bar', x: [
+      "Une répétition, puis le vrai match ? Menu <b>Match → Réinitialiser le match…</b>",
+      "Toute la fiche est gardée : équipes, joueurs, règlement, déroulé, textes.",
+      "Impros, score, fautes, historique et chronos sont effacés ; le déroulé repart de l'entrée du public.",
+      "Le match d'avant est d'abord sauvegardé : on peut le rouvrir."] },
   { ch: 6, t: 'À vous de jouer', x: ['Vous venez de dérouler une soirée.', 'Les raccourcis à retenir :'], info: 1, end: 1, en: () => { S.bravo = true; }, lv: () => { S.bravo = false; },
-    short: [['⌘↩', 'Projeter'], ['⌘B', 'Noir'], ['⌘→', 'Préparer la séquence suivante'], ['⌥⌘S', 'Lancer / arrêter la sirène'], ['⌘K', 'Calage'], ['⌘S', 'Enregistrer'], ['⇧⌘E', 'Exporter la feuille de match']] },
+    short: [['⌘↩', 'Projeter'], ['⌘B', 'Noir'], ['⌘⌫', 'Annuler la projection'], ['⌘→', 'Préparer la séquence suivante'], ['⌥⌘S', 'Lancer / arrêter la sirène'], ['⌘K', 'Calage'], ['⌘S', 'Enregistrer'], ['⇧⌘E', 'Exporter la feuille de match']] },
 ];
 
 // ---------- Moteur ----------
