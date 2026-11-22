@@ -143,13 +143,13 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .vg-menu.sortie { right: 132px; top: 40px; }
 .vg-center { flex: 1; min-height: 0; padding: 8px 20px 12px; display: flex; flex-direction: column; gap: 16px; position: relative; }
 /* Carte des chronos */
-.clock { height: 80px; flex: none; display: flex; align-items: center; background: rgba(0,0,0,.28); border: 1px solid var(--hair); border-radius: 12px; padding: 0 16px; box-sizing: border-box; }
+.clock { height: 98px; flex: none; display: flex; align-items: center; background: rgba(0,0,0,.28); border: 1px solid var(--hair); border-radius: 12px; padding: 0 16px; box-sizing: border-box; }
 .clock .z { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; } .clock .z > div { display: flex; gap: 5px; align-items: center; }
 .clock .lab { font-size: 12px; font-weight: 600; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.clock .sep { width: 1px; height: 52px; background: var(--hair); margin: 0 12px; flex: none; }
+.clock .sep { width: 1px; height: 64px; background: var(--hair); margin: 0 12px; flex: none; }
 .clock .b { font-size: 11px; padding: 3px 7px; }
-#vg-clk { font: 700 27px var(--mono); width: 92px; } #vg-clk.warn { color: #FFD60A; } #vg-clk.crit { color: var(--live); }
-.ic2 { font: 600 20px var(--mono); width: 104px; height: 28px; box-sizing: border-box; padding: 0 6px; margin-right: 36px; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; background: rgba(255,255,255,.07); white-space: nowrap; } .ic2 svg { margin-left: auto; opacity: .6; } .ic2.run { color: var(--accent); }
+#vg-clk { font: 700 46px var(--mono); width: 150px; } #vg-clk.warn { color: #FFD60A; } #vg-clk.crit { color: var(--live); }
+.ic2 { font: 700 46px var(--mono); width: 150px; height: 52px; box-sizing: border-box; padding: 0 6px; margin-right: 36px; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; background: rgba(255,255,255,.07); white-space: nowrap; } .ic2 svg { margin-left: auto; opacity: .6; } .ic2.run { color: var(--accent); }
 .alert { background: #FFD60A !important; color: #000; font-weight: 600; animation: vg-pop .25s ease-out both; }
 .scz { flex: none; display: flex; align-items: flex-end; gap: 10px; }
 .scz .nms { display: flex; flex-direction: column; gap: 2px; width: 78px; } .scz .nm { height: 26px; display: flex; align-items: center; font-weight: 600; font-size: 12.5px; white-space: nowrap; }
@@ -161,6 +161,14 @@ kbd { font: 600 12px var(--ui); background: var(--panel); border: 1px solid var(
 .scz .n.bump { animation: vg-bump .6s cubic-bezier(.2,.8,.2,1); }
 @keyframes vg-bump { 30% { transform: scale(1.7); color: var(--accent); } }
 .scz .pm { color: var(--dim); } .hist { color: var(--dim); margin-left: 10px; }
+.pm1 { display: flex; flex-direction: column; gap: 2px; } .pm1 .b { font-size: 9.5px; padding: 1px 6px; }
+.clock .lab.cau { color: var(--accent); }
+/* Caucus : la pilule qui se vide, sans chiffres (écran projeté), et la tuile du board */
+.cbar { position: absolute; left: 240px; top: 40px; width: 800px; height: 32px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; animation: cb-hide .4s var(--rem) forwards; }
+.cbar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); animation: cb-shrink var(--rem) linear forwards; }
+@keyframes cb-shrink { to { width: 0; } } @keyframes cb-hide { to { opacity: 0; } }
+.cau-t { font: 700 34px var(--mono); color: var(--accent); } .cau-p { height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; } .cau-p i { display: block; height: 100%; background: var(--accent); animation: cb-shrink var(--rem) linear forwards; }
+.cau-go { border: 0; border-radius: 8px; height: 40px; background: var(--tq); color: #0A0A0A; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 /* Aperçus */
 .prev { display: flex; align-items: center; gap: 10px; flex: none; }
 .pv { flex: 1; min-width: 0; } .pv h5 { margin: 0 0 6px; font-size: 14px; font-weight: 700; height: 18px; display: flex; gap: 8px; align-items: center; }
@@ -440,7 +448,7 @@ function init() {
     sel: 'pub', prep: { k: 'welcome' }, air: null, black: true, nb: 0, banner: false,
     score: { a: 0, b: 0 }, fouls: { a: 0, b: 0 }, past: [], pending: [], inPlay: false,
     card: null, result: null, remain: 2700, run: false, alert: false, improRun: false, skip: false,
-    pl: {}, tab: 'match', schema: false, sk: 0, play: true, gold: false,
+    pl: {}, cau: 0, cauDone: false, tab: 'match', schema: false, sk: 0, play: true, gold: false,
   };
 }
 let S = init(), cur = 0, done = false, timers = [], quiet = false;
@@ -450,10 +458,22 @@ function live(id) { S.seqs.forEach(q => { if (q.st === 'live') q.st = 'done'; })
 function prep(id, scr) { S.sel = id; S.prep = scr; }
 function addImpro(n, after) {
   const i = S.seqs.findIndex(q => q.id === after) + 1;
-  S.seqs.splice(i, 0, { id: 'i' + n, hd: n }, ...[['c', 'Carte'], ['f', 'Faute'], ['v', 'Vote'], ['r', 'Résultat+Score']].map(([k, l]) => ({ id: k + n, l, ind: 1 })));
+  S.seqs.splice(i, 0, { id: 'i' + n, hd: n }, ...[['c', 'Caucus+Carte'], ['f', 'Faute'], ['v', 'Vote'], ['r', 'Résultat+Score']].map(([k, l]) => ({ id: k + n, l, ind: 1 })));
 }
 const newCard = () => ({ title: '', cat: 'Libre', nat: 'Mixte', dur: 120 });
 const snap = () => JSON.parse(JSON.stringify(S.card));
+// Caucus : 30 s, comme le règlement par défaut. À la fin, le chrono de l'impro démarre tout seul et, si la carte
+// n'est pas encore projetée, le message de retard remplace « Caucus ». Son minuteur survit au passage d'étape.
+let cauT = 0;
+const cauRem = () => Math.max(0, (S.cau - Date.now()) / 1000);
+function startCaucus() { if (quiet) { S.cauDone = true; return; } S.cau = Date.now() + 30000; clearTimeout(cauT); cauT = setTimeout(endCaucus, 30000); }
+function endCaucus() {
+  clearTimeout(cauT); if (!S.cau) return;
+  S.cau = 0; S.cauDone = true; S.improRun = true; ie = 0;
+  if (S.air && S.air.k === 'caucus') S.air = { k: 'caucus', n: 1, late: true };
+  render();
+}
+const cbar = () => S.cau ? `<div class="cbar" style="--rem:${cauRem().toFixed(2)}s"><i style="width:${(cauRem() / 30 * 100).toFixed(2)}%"></i></div>` : '';
 
 // ---------- Écrans projetés ----------
 function fd(from, to, delay) {
@@ -485,11 +505,13 @@ function scrHTML(st) {
     case 'anthem': return `<div style="position:absolute;inset:0;background:${col(st.c)}"></div><div class="rise" style="position:relative;color:var(--ink);display:flex;flex-direction:column;gap:32px;align-items:center">
       <div style="width:200px;height:200px;border-radius:50%;border:8px solid var(--ink);box-sizing:border-box;display:grid;place-items:center;font-size:110px">${up(S.teams[st.c].name[0])}</div>
       <div class="s6" style="font-size:56px;letter-spacing:.3em">HYMNE</div><div style="font-size:150px">${up(S.teams[st.c].name)}</div></div>`;
+    case 'caucus': return `<div class="rise" style="display:flex;flex-direction:column;gap:28px;align-items:center;padding:0 56px"><span class="s6 sec" style="font-size:48px;letter-spacing:.1em">IMPRO ${st.n}</span>
+      ${st.late ? `<div style="font-size:110px">LA RÉGIE EST À LA BOURRE</div><div class="s6 acc" style="font-size:56px">Le thème arrive, l'impro démarre !</div>` : `<div style="font-size:180px;letter-spacing:.06em">CAUCUS</div><div class="s6 sec" style="font-size:52px">Les équipes se concertent</div>`}</div>${st.late ? '' : cbar()}`;
     case 'impro': { const c = st.card; return `<div class="rise" style="display:flex;flex-direction:column;gap:28px;align-items:center;padding:0 56px">
       <div class="g" style="gap:20px"><span class="s6 sec" style="font-size:48px;letter-spacing:.1em">IMPRO ${st.n}</span><span class="nat">${up(c.nat)}</span></div>
       ${c.title ? `<div style="font-size:112px;max-width:1150px">${up(c.title)}</div>` : ''}
       <div style="display:flex;flex-direction:column;gap:20px;align-items:center;margin-top:6px"><span class="chip">${ic('view-grid')}${up(c.cat)}</span>
-      <div class="g" style="gap:24px"><span class="chip">${ic('group')}ILLIMITÉ</span><span class="chip">${ic('timer')}${c.dur / 60} MIN</span></div></div></div>`; }
+      <div class="g" style="gap:24px"><span class="chip">${ic('group')}ILLIMITÉ</span><span class="chip">${ic('timer')}${c.dur / 60} MIN</span></div></div></div>${st.n === 1 ? cbar() : ''}`; }
     case 'foul': return `<div style="position:absolute;left:0;right:0;top:0;height:14px;background:${col(st.team)}"></div><div class="rise" style="display:flex;flex-direction:column;gap:30px;align-items:center">
       <div class="acc" style="font-size:56px;letter-spacing:.1em">FAUTE · ${up(S.teams[st.team].name)}</div><div style="font-size:140px">${up(st.type)}</div>
       <div class="g" style="gap:18px">${dots(3)}<span class="sec" style="font-size:48px">3/3</span></div>
@@ -541,7 +563,7 @@ function setScreen(h, st) {
 }
 
 // ---------- Schéma animé : on prépare, puis on projette ----------
-const FLOW = ['Carte', 'Fautes', 'Vote', 'Résultat+Score'];
+const FLOW = ['Caucus+Carte', 'Fautes', 'Vote', 'Résultat+Score'];
 const SCH = [
   { l: 'Carte prête', p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, cap: '<b>1.</b> Le board prépare toujours l’écran suivant. <b>Vous seul</b> le voyez, en jaune pointillé.' },
   { l: 'Projeter', p: 'Carte de l’impro', a: 'Début de période', ai: -1, pi: 0, press: 1, cap: '<b>2.</b> <b>Projeter</b> l’envoie à l’antenne.' },
@@ -734,12 +756,12 @@ function renderBoard() {
   put('#r-foot', `<button type="button" class="b lg" data-a="x">${ic(CHEV, 13, 2)}Suivante</button>`);
   if (render.sel !== S.sel) { render.sel = S.sel; see($('#r-list .row.sel')); }
   // Chronos et score
-  const c = S.card, n = S.sel === 'c2' ? 2 : 1, ilab = warm() ? 'Échauffement' : c ? (n === 2 ? 'Impro 2' : 'Impro 1' + (c.title ? ' · ' + esc(c.title) : '')) : 'Impro';
+  const c = S.card, n = S.sel === 'c2' ? 2 : 1, cau = !!S.cau, ilab = cau ? 'CAUCUS · Impro 1' : warm() ? 'Échauffement' : c ? (n === 2 ? 'Impro 2' : 'Impro 1' + (c.title ? ' · ' + esc(c.title) : '')) : 'Impro';
   const lancer = (a, run) => `<button type="button" class="b" data-a="${a}" style="width:68px;justify-content:center">${ic(run ? 'pause' : 'play', 12)}${run ? 'Pause' : 'Lancer'}</button>`;
   const reset = `<button type="button" class="b" data-a="x" title="Remettre à zéro" aria-label="Remettre à zéro">${ic('refresh', 12)}</button>`;
   put('#r-clock', `<div class="z"><div><span class="lab">1re période</span>${S.alert ? `<button type="button" class="b alert" data-a="alert">${ic('bell', 12)}Plus que 15 min</button>` : ''}</div>
-      <div><span id="vg-clk"></span>${lancer('clock', S.run)}<button type="button" class="b" data-a="x">−1 min</button><button type="button" class="b" data-a="x">+1 min</button>${reset}</div></div>
-    <i class="sep"></i><div class="z"><span class="lab">${ilab}</span><div><span class="ic2${S.improRun ? ' run' : ''}"><span id="vg-ie">${ieText()}</span>${warm() ? '' : ic('nav-arrow-down', 11)}</span>${lancer('iclock', S.improRun)}${reset}</div></div>
+      <div><span id="vg-clk"></span>${lancer('clock', S.run)}<span class="pm1"><button type="button" class="b" data-a="x">+1 min</button><button type="button" class="b" data-a="x">−1 min</button></span>${reset}</div></div>
+    <i class="sep"></i><div class="z"><span class="lab${cau ? ' cau' : ''}">${ilab}</span><div><span class="ic2${S.improRun || cau ? ' run' : ''}"${cau ? ' style="background:none"' : ''}><span id="vg-ie">${ieText()}</span>${warm() || cau ? '' : ic('nav-arrow-down', 11)}</span>${cau ? `<button type="button" class="b" data-a="x" style="width:76px;justify-content:center">${ic('check-circle', 12)}Terminer</button>` : lancer('iclock', S.improRun)}${reset}</div></div>
     <i class="sep"></i><div class="scz"><div class="nms">${['a', 'b'].map(s => `<span class="nm" style="color:${col(s)}">${esc(S.teams[s].name)}</span>`).join('')}</div>
       <div class="bx"><h6>FAUTES</h6>${['a', 'b'].map(s => `<div><span class="fm" title="Cliquer pour corriger les fautes"><span class="d">${[0, 1, 2].map(i => `<i class="${i < S.fouls[s] ? 'on' : ''}"></i>`).join('')}</span>${ic(CHEV, 10, 2.2)}</span></div>`).join('')}</div>
       <div class="bx c"><h6>SCORE</h6>${['a', 'b'].map(s => `<div><span class="pm">${ic('minus', 13)}</span><span class="n" data-n="${S.score[s]}">${S.score[s]}</span><span class="pm">${ic('plus', 13)}</span></div>`).join('')}</div></div><span class="hist" style="display:flex;flex-direction:column;gap:7px"><span title="Remettre le score à zéro" style="color:var(--live)">${ic('restart', 17)}</span><span title="Historique des points">${ic('clock-rotate-right', 17)}</span></span>`);
@@ -778,7 +800,7 @@ function renderBoard() {
         ${mine.length ? `<div class="fouls" style="display:block"><ul>${mine.map(p => `<li><i style="background:${col(p.t)}"></i>${esc(S.teams[p.t].name)} · ${esc(p.type)}${p.pt ? `<b>+1 ${esc(S.teams.b.name)}</b>` : ''}</li>`).reverse().join('')}</ul></div>` : '<span class="muted">Aucune faute sifflée pendant cette impro.</span>'}</div>`;
     const plT = (s, names) => `<div><h6><span style="color:${col(s)};font-size:14.5px">${esc(S.teams[s].name)}</span><small>${names.filter(x => S.pl[x]).length}/${names.length}</small></h6>${names.map((nm, i) => `<button type="button" class="plb" data-a="player" data-v="${nm}" ${plOn ? '' : 'disabled'}><i class="cb ${S.pl[nm] ? '' : 'off'}">${S.pl[nm] ? '✓' : ''}</i>${nm}${i < 2 ? `<u>${'CA'[i]}</u>` : ''}${S.pl[nm] ? `<i class="lm ${Object.keys(S.pl).find(x => S.pl[x] && names.includes(x)) === nm ? 'on' : ''}" title="${Object.keys(S.pl).find(x => S.pl[x] && names.includes(x)) === nm ? 'Lead : le premier entré de l\'équipe' : 'Désigner comme lead'}">L</i>` : ''}</button>`).join('')}</div>`;
     const players = wd => `<div class="tile ${plOn ? '' : 'off'}" style="width:${wd}px"><h3>${ic('group', 16)}Joueurs en jeu<small style="font-weight:400">non projeté</small></h3><div class="plays">${plT('a', ['Zoé', 'Malik', 'Jeanne'])}${plT('b', ['Léa', 'Sami', 'Nour'])}</div>${plOn ? '' : '<span class="cap">Se cochent dès que la carte est à l\'antenne, jusqu\'au score.</span>'}<span class="cap" style="margin-top:auto"><b>Cochez dans l\'ordre d\'entrée.</b> L = lead, le premier entré de son équipe.</span></div>`;
-    w += `<div class="rail"><b>Impro ${n}</b>` + ['Carte', 'Fautes', 'Vote', 'Résultat+Score'].map((l, i) => { const q = seq('cfvr'[i] + n) || {}; return `<span class="${i === 1 ? 'opt' : ''} ${i === stg ? 'on' : ''}">${q.st === 'done' ? `<i class="st done">${ic('check-circle', 13, 1.8)}</i>` : q.st === 'live' ? '<i class="st live"></i>' : ''}${l}</span>${i < 3 ? `<u>${ic('nav-arrow-right', 11, 2)}</u>` : ''}`; }).join('') + '</div><div class="tiles">';
+    w += `<div class="rail"><b>Impro ${n}</b>` + ['Caucus+Carte', 'Fautes', 'Vote', 'Résultat+Score'].map((l, i) => { const q = seq('cfvr'[i] + n) || {}; return `<span class="${i === 1 ? 'opt' : ''} ${i === stg ? 'on' : ''}">${q.st === 'done' ? `<i class="st done">${ic('check-circle', 13, 1.8)}</i>` : q.st === 'live' ? '<i class="st live"></i>' : ''}${l}</span>${i < 3 ? `<u>${ic('nav-arrow-right', 11, 2)}</u>` : ''}`; }).join('') + '</div><div class="tiles">';
     if (stg === 0) {
       const k = S.sel === 'c1' ? c : newCard(), dis = S.sel === 'c2' ? 'disabled' : '';
       const pm = (sign, off) => `<i class="pm2 ${off ? 'off' : ''}" style="width:38px;height:24px">${ic(sign, 12)}</i>`;
@@ -790,11 +812,11 @@ function renderBoard() {
         <div><span class="lb">Durée</span><span class="v">${pm('minus')}<span class="val" style="font-weight:700;color:var(--fg);font-size:15px">${mmss(k.dur)}</span>${pm('plus')}</span></div>
         <div class="quick" id="vg-durs"><button type="button" class="b q" data-a="x" ${dis}>45 s</button>${[1, 2, 3, 4, 5, 6, 7].map(m => `<button type="button" class="b q ${k.dur === m * 60 ? 'on' : ''}" data-a="dur" data-v="${m}" ${dis}>${m} min</button>`).join('')}</div></div>
         ${k.title ? '' : `<div><button type="button" class="btn" data-a="skip">${ic('arrow-right', 14)}Pas d'autre impro : passer à « Entracte »</button></div>`}</div>
-        <div class="tile" style="width:220px">${nbn('Projeter montrera', `La carte de l'impro ${n}`, 'puis le vote se prépare')}<b style="font-size:14.5px;color:var(--soft)">Pendant le jeu</b><p style="font-size:13px;color:var(--soft)">Une fois la carte projetée, le <b>vote</b> se prépare tout de suite. Si l'arbitre siffle une faute, vous pourrez la saisir ici dès que la carte sera à l'antenne.</p></div>${players(240)}`;
+        <div class="tile" style="width:260px">${nbn('Projeter montrera', `La carte de l'impro ${n}`, 'puis le vote se prépare')}${cauPanel(n)}</div>${players(240)}`;
     } else {
       const fl = ['a', 'b'].map(s => S.teams[s].name + ' ' + mine.filter(p => p.t === s).length).join(' · ');
       w += `<div class="tile" style="width:220px"><h3 style="color:var(--dim)">Carte${cst === 'live' ? '<small class="live">● DIRECT</small>' : cst === 'done' ? '<small class="ok">✓ JOUÉE</small>' : ''}</h3>
-        <b style="font-size:17px">${esc(c.title || 'Sans thème')}</b><dl class="kv"><dt>Nature</dt><dd>${c.nat}</dd><dt>Catégorie</dt><dd>${esc(c.cat)}</dd><dt>Joueurs</dt><dd>Illimité</dd><dt>Durée</dt><dd>${mmss(c.dur)}</dd>${mine.length ? `<dt>Fautes</dt><dd>${esc(fl)}</dd>` : ''}${S.result && stg >= 3 ? `<dt>Vote</dt><dd>${S.result === 'tie' ? 'Égalité' : esc(S.teams[S.result].name)}</dd>` : ''}</dl>
+        <b style="font-size:17px">${esc(c.title || 'Sans thème')}</b><dl class="kv"><dt>Nature</dt><dd>${c.nat}</dd><dt>Catégorie</dt><dd>${esc(c.cat)}</dd><dt>Joueurs</dt><dd>Illimité</dd><dt>Durée</dt><dd>${mmss(c.dur)}</dd>${S.cau ? `<dt>Caucus</dt><dd style="color:var(--accent)">en cours</dd>` : ''}${mine.length ? `<dt>Fautes</dt><dd>${esc(fl)}</dd>` : ''}${S.result && stg >= 3 ? `<dt>Vote</dt><dd>${S.result === 'tie' ? 'Égalité' : esc(S.teams[S.result].name)}</dd>` : ''}</dl>
         <span style="flex:1"></span><button type="button" class="btn" data-a="x" style="align-self:center">${ic('page', 14)}Modifier la carte</button></div>`;
       w += `<div class="tile act" style="flex:1">`;
       if (stg === 1) w += nbn('Projeter montrera', 'L\'écran des fautes', 'puis le vote se prépare de nouveau') + foulTools();
@@ -807,15 +829,23 @@ function renderBoard() {
     w += '</div>';
   }
   const wk = put('#r-work', w);
+  const ct = $('#vg-cau'); if (ct) ct.textContent = mmss(Math.ceil(cauRem()));
   if (render.wsel !== S.sel) { render.wsel = S.sel; wk.scrollTop = 0; }
   const ti = $('#vg-title'); if (ti && S.sel === 'c1' && ti.value !== S.card.title && document.activeElement !== ti) ti.value = S.card.title;
+}
+// Tuile Caucus de l'étape Caucus+Carte : le bouton, puis le temps qui reste et sa barre
+function cauPanel(n) {
+  const head = `<h3 style="font-size:14.5px">Caucus<small style="font-weight:400">30 s · réglé dans la fiche</small></h3>`;
+  if (n === 1 && S.cau) return head + `<span class="cau-t" id="vg-cau">${mmss(Math.ceil(cauRem()))}</span><div class="cau-p" style="--rem:${cauRem().toFixed(2)}s"><i style="width:${(cauRem() / 30 * 100).toFixed(2)}%"></i></div><span class="cap">À 0, le chrono de l'impro démarre tout seul.</span>`;
+  if (n === 1 && S.cauDone) return head + `<span class="cap" style="font-size:12.5px">${ic('check-circle', 13)} Caucus terminé, le chrono de l'impro tourne.</span>`;
+  return head + `<button type="button" class="cau-go" data-a="caucus">${ic('play', 13)}Lancer le caucus</button><span class="cap">Au sifflet, même en tapant le thème (⌘L). L'écran Caucus remplace ce qui est à l'écran ; Projeter enverra ensuite la carte. Pas de caucus cette fois ? Ne lancez rien.</span>`;
 }
 // Chrono : défile en accéléré quand la valeur saute, sinon seconde par seconde
 let shown = 2700, tween = 0, ie = 0;
 // Chrono d'impro : décompte de la durée annoncée (comme l'app)
 // Échauffement préparé, ou à l'antenne sans étape d'impro préparée : le chrono du haut le décompte (5 min).
 function warm() { const live = S.seqs.find(q => q.st === 'live'); return S.sel === 'ech' || (live && live.id === 'ech' && !/^[cfvr]\d$/.test(S.sel)); }
-function ieText() { return warm() ? mmss(Math.max(0, 300 - ie)) : S.sel === 'c2' || !S.card ? '0:00' : mmss(Math.max(0, S.card.dur - ie)); }
+function ieText() { return S.cau ? mmss(Math.ceil(cauRem())) : warm() ? mmss(Math.max(0, 300 - ie)) : S.sel === 'c2' ? mmss(120) : !S.card ? '0:00' : mmss(Math.max(0, S.card.dur - ie)); }
 function drawClock() { const e = $('#vg-clk'); if (!e) return; e.textContent = mmss(shown); e.className = shown <= 300 ? 'crit' : shown <= 900 ? 'warn' : ''; }
 function clockTo(v) {
   cancelAnimationFrame(tween); tween = 0;
@@ -828,6 +858,7 @@ setInterval(() => {
   if (S.run && !tween && S.remain > 0) { S.remain--; shown = S.remain; drawClock(); }
   if (S.improRun) ie++; else if (!S.card) ie = 0;
   const e = $('#vg-ie'); if (e) e.textContent = ieText();
+  const ct = $('#vg-cau'); if (ct) ct.textContent = mmss(Math.ceil(cauRem()));
 }, 1000);
 
 // ---------- Étapes ----------
@@ -898,28 +929,31 @@ const STEPS = [
   { ch: 4, t: 'Remplir la carte', x: ["L'arbitre annonce : « Improvisation mixte, ayant pour thème… ».", "La carte suit cet ordre.", "Tapez le <b>thème</b>, ou choisissez-en un : l'aperçu suit chaque lettre."], tg: '#vg-title', ex: 'title', demo: 'La dernière valise', foc: '#r-work', chips: ['La dernière valise', 'Un lundi sur Mars'],
     do: v => { S.card.title = v; }, done: () => S.card.title.trim().length >= 3, af: ['Le public ne voit toujours rien : la carte est seulement en préparation.', "À droite, « Joueurs en jeu » est éteinte.", "La bande jaune du milieu dit déjà ce que Projeter montrera."] },
   { ch: 4, t: 'La durée', x: ["L'arbitre annonce trois minutes.", "Choisissez <b>3 min</b> dans les durées rapides."], tg: '#vg-durs', ex: 'dur', ok: v => v === '3', demo: '3', ds: '[data-a=dur][data-v="3"]', foc: '#r-work', do: () => { S.card.dur = 180; } },
-  { ch: 4, t: "Annoncer l'impro", x: ["La carte est complète.", "Projetez-la au moment où l'arbitre l'annonce."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('c1'); S.air = { k: 'impro', n: 1, card: snap() }; S.inPlay = true; prep('v1', { k: 'vote', card: snap() }); }, af: ["La carte est à l'antenne.", "Le <b>vote</b> est déjà en préparation.", "La carte devient un résumé « ● DIRECT » à gauche ; les <b>Joueurs en jeu</b> s'activent à droite."] },
+  { ch: 4, t: 'Le caucus', x: ["L'arbitre siffle : les équipes ont 30 secondes pour se concerter.", "Cliquez sur <b>Lancer le caucus</b>, dans la tuile du milieu."], tg: '[data-a=caucus]', ex: 'caucus', keys: '⌘L', foc: '#r-work',
+    do: () => { live('c1'); S.air = { k: 'caucus', n: 1 }; S.inPlay = true; startCaucus(); }, af: ["L'écran <b>Caucus</b> est à l'antenne tout de suite, sans Projeter.", "La salle voit une barre qui se vide, sans chiffres ; les secondes sont pour vous, en haut et dans la tuile.", "La carte reste en préparation. Durée dans la fiche (Règlement, 30 s par défaut)."] },
+  { ch: 4, t: 'Projeter la carte', x: ["Le caucus tourne.", "Projetez la carte : le thème remplace « Caucus », la barre continue."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    do: () => { live('c1'); S.air = { k: 'impro', n: 1, card: snap() }; S.inPlay = true; prep('v1', { k: 'vote', card: snap() }); }, af: ["La carte est à l'antenne, le <b>vote</b> déjà en préparation.", "Carte prête avant le sifflet ? Projetez-la d'abord : la barre viendra dessus.", "Caucus fini avant la carte ? « La régie est à la bourre » remplace « Caucus » (textes réglables dans le Déroulé).", "La carte devient un résumé « ● DIRECT » à gauche ; les <b>Joueurs en jeu</b> s'activent à droite."] },
   { ch: 4, t: 'Qui joue ?', x: ["Cochez les joueurs qui entrent en jeu, par exemple <b>Zoé</b>.", "Jamais projeté : cela sert à l'historique et à l'Impro d'or."], tg: '[data-a=player][data-v="Zoé"]', ex: 'player', ok: v => v === 'Zoé', demo: 'Zoé', foc: '#r-work', do: v => { S.pl[v] = true; }, af: ['Chaque équipe a son compteur (1/3).', "Le premier joueur coché de chaque équipe est son <b>lead</b> (pastille L jaune) : cochez dans l'ordre d'entrée. Un clic sur le L d'un autre joueur coché le change.", "On peut cocher et décocher jusqu'au score."] },
-  { ch: 4, t: "Le chrono de l'impro", x: ["Lancez le chrono de l'impro, dans la carte du haut, au « Top ! »."], tg: '[data-a=iclock]', ex: 'iclock', foc: '#r-clock', do: () => { S.improRun = true; }, af: ["Il décompte la durée annoncée (ici 3:00).", "Au-delà, il passe en rouge et compte en « + ».", "Rien de tout cela n'est projeté.", "L'arbitre change la durée ? Un <b>clic sur le temps</b> : −15 s, +15 s ou une durée rapide (15 s à 7 min). Le temps déjà joué est gardé."] },
+  { ch: 4, t: "Le chrono de l'impro", info: 1, foc: '#r-clock', x: ["À la fin du caucus, le chrono de l'impro <b>démarre tout seul</b> : il décompte la durée annoncée (ici 3:00).", "Pas de caucus ? Lancez-le vous-même, au « Top ! ».", "Au-delà de la durée, il passe en rouge et compte en « + ». Rien n'est projeté.", "L'arbitre change la durée ? Un <b>clic sur le temps</b> : −15 s, +15 s ou une durée rapide (15 s à 7 min)."],
+    en: () => { if (S.cau) endCaucus(); else { S.improRun = true; S.cauDone = true; } } },
   { ch: 4, t: 'Faute sifflée', x: ["L'arbitre siffle les Lynx, qui ont déjà deux fautes.", "La zone « Faute sifflée par l'arbitre » est facultative : elle ne sert qu'en cas de faute.", "Cliquez sur <b>+ Faute Lynx</b>."], tg: '[data-a=foulmenu][data-v=a]', ex: 'foulmenu', ok: v => v === 'a', demo: 'a', foc: '#r-work',
     en: () => { S.past = [{ t: 'a', type: 'Retard de jeu', old: 1 }, { t: 'a', type: 'Obstruction', old: 1 }]; S.fouls.a = 2; }, do: () => { S.menu = 'foul'; } },
   { ch: 4, t: 'Le type de faute', x: ["Choisissez la faute annoncée par l'arbitre, par exemple <b>Cabotinage</b>.", "Raison non comprise ? « À clarifier par l'arbitre » compte comme une faute ordinaire."], tg: '#m-types', ex: 'foultype', demo: 'Cabotinage', ds: '[data-v="Cabotinage"]', foc: '#r-work', do: v => { S.menu = null; S.pending = [{ t: 'a', type: v }]; } },
   { ch: 4, t: 'Valider la faute', x: ["Plusieurs fautes peuvent partir ensemble, pour une équipe ou pour les deux : un seul coup de sifflet.", "Ici, une seule : cliquez sur <b>Valider la faute sifflée</b>."], tg: '[data-a=whistle]', ex: 'whistle', foc: '#r-work',
     do: () => { const f = S.pending[0]; S.past.push({ t: 'a', type: f.type, pt: 1 }); S.pending = []; S.fouls.a = 0; S.score.b = 1; S.notice = 'Faute pour Lynx · +1 point pour Hiboux'; prep('f1', { k: 'foul', team: 'a', type: f.type }); },
     af: ["3e faute des Lynx : les Hiboux gagnent un point.", "Le score part en direct, sans passer par Projeter.", "Un compteur à corriger ? Un clic sur les points de la case <b>FAUTES</b>, en haut, ouvre la liste : aucune, 1, 2 ou 3 fautes. Tout va dans l'historique des points.", "L'écran des fautes est prêt et prend la place du vote."] },
-  { ch: 4, t: 'Montrer la faute', x: ["Projetez l'écran des fautes.", "La salle comprend d'où vient le point."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev', do: () => { live('f1'); S.air = S.prep; prep('v1', { k: 'vote', card: snap() }); }, af: ["Le vote se prépare de nouveau.", "Si l'arbitre siffle encore, la faute reprend la place du vote, autant de fois que nécessaire."] },
+  { ch: 4, t: 'Montrer la faute', x: ["Projetez l'écran des fautes.", "La salle comprend d'où vient le point."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev', do: () => { live('f1'); S.air = S.prep; S.improRun = false; prep('v1', { k: 'vote', card: snap() }); }, af: ["Le chrono de l'impro s'arrête : l'écran des fautes, comme celui du vote, arrive une fois l'impro finie.", "Le vote se prépare de nouveau.", "Si l'arbitre siffle encore, la faute reprend la place du vote, autant de fois que nécessaire."] },
   { ch: 4, t: 'Le vote', x: ["Fin de l'impro.", "Le vote est déjà en préparation : projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: ['Le score est caché pendant le vote, pour ne pas influencer la salle.', "Pour le montrer : l'interrupteur « Score et fautes en bandeau » de la bande jaune (ce vote seulement)."] },
+    do: () => { live('v1'); S.air = S.prep; S.inPlay = false; S.improRun = false; prep('r1', { k: 'point', card: snap(), sc: Object.assign({}, S.score) }); }, af: ["Le chrono de l'impro reste arrêté, sur le temps joué.", 'Le score est caché pendant le vote, pour ne pas influencer la salle.', "Pour le montrer : l'interrupteur « Score et fautes en bandeau » de la bande jaune (ce vote seulement)."] },
   { ch: 4, t: 'Le résultat', x: ["Les cartons sont levés, l'arbitre tranche.", "Cliquez sur l'équipe qui remporte le vote, ou sur Égalité."], tg: '#vg-res', ex: 'result', demo: 'b', ds: '[data-a=result][data-v=b]', foc: '#r-work',
     // Étape Résultat+Score : le point seul, puis le tableau des scores s'enchaîne au bout de 4 s.
     do: v => { const from = Object.assign({}, S.score); if (v !== 'b') S.score.a++; if (v !== 'a') S.score.b++; const to = Object.assign({}, S.score); S.result = v; live('r1');
       const board = { k: 'board', res: v, from, to };
       S.air = quiet ? board : { k: 'point', res: v, card: snap() }; S.chain = quiet ? null : board;
       if (!quiet) later(() => { if (S.chain) { S.air = S.chain; S.chain = null; render(); } }, 4000);
-      addImpro(2, 'r1'); S.skip = true; prep('c2', { k: 'impro', n: 2, card: newCard() }); },
+      addImpro(2, 'r1'); S.skip = true; S.improRun = false; ie = 0; prep('c2', { k: 'impro', n: 2, card: newCard() }); },
     lv: () => { if (S.chain) { S.air = S.chain; S.chain = null; } },
-    af: ['Un seul clic a compté le point et projeté le résultat, sans Projeter.', 'Quatre secondes plus tard, le tableau des scores s\'enchaîne tout seul : les volets tournent. Projeter le fait arriver sans attendre.', 'La carte de l\'impro 2 est déjà prête : la boucle recommence.'] },
+    af: ['Un seul clic a compté le point et projeté le résultat, sans Projeter.', 'Quatre secondes plus tard, le tableau des scores s\'enchaîne tout seul : les volets tournent. Projeter le fait arriver sans attendre.', 'La carte de l\'impro 2 est déjà prête : la boucle recommence. Le chrono de l\'impro revient à zéro, sur sa durée.'] },
   { ch: 5, t: 'Le chrono de la période', x: ['Lancez le chrono de la période, dans la carte du haut.', 'Pour la visite, le temps passe en accéléré.'], tg: '[data-a=clock]', ex: 'clock', foc: '#r-clock', wait: 2500,
     do: () => { S.run = true; S.remain = 900; S.alert = true; S.banner = true; } },
   { ch: 5, t: "L'alerte des 15 minutes", x: ["À 15 minutes de la fin, le chrono passe au jaune.", "La <b>sirène sonne toute seule</b> : pas besoin d'y toucher.", "Un bandeau prévient la salle pendant 10 secondes.", "Cliquez sur l'alerte pour l'effacer."], tg: '[data-a=alert]', ex: 'alert', foc: '#r-clock',
@@ -958,7 +992,7 @@ function toast(t) { if (quiet) return; const e = $('#vg-toast'); e.innerHTML = `
 function runStep(s) { for (let i = 0; i < 4; i++) { s.do && s.do(s.demo); if (!s.done || s.done()) break; } }
 let busy = false, note = '';
 function go(n) {
-  clearTimers(); stopSiren(); busy = false; quiet = true; S = init(); ie = 0; $('#vg-ghost').hidden = true;
+  clearTimers(); clearTimeout(cauT); stopSiren(); busy = false; quiet = true; S = init(); ie = 0; $('#vg-ghost').hidden = true;
   for (let i = 0; i < n; i++) { const s = STEPS[i]; s.en && s.en(); runStep(s); s.lv && s.lv(); }
   cur = n; note = n > 0 ? STEPS[n - 1].af || '' : ''; STEPS[n].en && STEPS[n].en(); done = !!STEPS[n].info;
   render(); quiet = false; coach(); store();
@@ -1113,6 +1147,7 @@ document.addEventListener('keydown', e => {
   if (mod && e.altKey && e.code === 'KeyS') { e.preventDefault(); act('siren'); }
   else if (mod && k === 'enter') { e.preventDefault(); act('project'); }
   else if (mod && k === 'b') { e.preventDefault(); act('black'); }
+  else if (mod && k === 'l') { e.preventDefault(); act('caucus'); }
   else if (mod && k === 's') { e.preventDefault(); act('save'); }
   else if (!mod && !e.altKey && ((k === 'enter' && e.target.tagName !== 'BUTTON') || (k === 'arrowright' && !typing))) { e.preventDefault(); next(); }
   else if (!mod && !e.altKey && k === 'arrowleft' && !typing) { e.preventDefault(); if (cur > 0) go(cur - 1); }
