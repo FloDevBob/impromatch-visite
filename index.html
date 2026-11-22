@@ -442,8 +442,8 @@ function init() {
     seqs: [
       { id: 'pub', l: 'Entrée du public' }, { id: 'how', l: 'Comment ça marche' }, { id: 'ech', l: 'Échauffement' },
       { id: 'arb', l: "Entrée de l'arbitre" }, { id: 'eq', l: 'Entrée des équipes' }, { id: 'ha', l: 'Hymne · Lynx' }, { id: 'hb', l: 'Hymne · Hiboux' },
-      { id: 'p1', l: '1re période', per: 1 }, { id: 'add1', add: 1 }, { id: 'ent', l: 'Entracte' },
-      { id: 'p2', l: '2e période', per: 1 }, { id: 'add2', add: 1 }, { id: 'fin', l: 'Fin du match' }, { id: 'mer', l: 'Remerciements' },
+      { id: 'p1', l: 'Première période', per: 1 }, { id: 'add1', add: 1 }, { id: 'ent', l: 'Entracte' },
+      { id: 'p2', l: 'Deuxième période', per: 1 }, { id: 'add2', add: 1 }, { id: 'fin', l: 'Fin du match' }, { id: 'mer', l: 'Remerciements' },
     ],
     sel: 'pub', prep: { k: 'welcome' }, air: null, black: true, nb: 0, banner: false,
     score: { a: 0, b: 0 }, fouls: { a: 0, b: 0 }, past: [], pending: [], inPlay: false,
@@ -703,7 +703,7 @@ function renderSheet() {
     const list = `<div class="tile" style="width:300px;flex:none;display:flex;flex-direction:column;padding:10px 6px">
       <div style="display:flex;align-items:center;gap:8px;padding:0 6px 4px"><b style="flex:1">Déroulé du match</b><span class="btn">${ic('plus', 12, 2)}Ajouter une séquence</span></div>
       ${sec("Cérémonial d'ouverture")}${r(grip, 'Entrée du public', 'Accueil')}${r(grip, 'Comment ça marche', 'Explications')}${r(grip, 'Mise en voix', 'Titre', { dot: 1 })}${r(grip, "Entrée de l'arbitre", 'Corps arbitral')}${r(grip, 'Entrée des équipes', 'Équipes')}${r(grip, 'Hymne · ' + a, 'Hymne')}${r(grip, 'Hymne · ' + b, 'Hymne')}
-      ${sec('Match')}${r(lock, '1re période', 'Période')}${slot}${r(lock, 'Entracte', 'Entracte', { sel: 1, dot: 1 })}${r(lock, '2e période', 'Période')}${slot}${r(lock, 'Fin du match', 'Victoire')}
+      ${sec('Match')}${r(lock, 'Première période', 'Période')}${slot}${r(lock, 'Entracte', 'Entracte', { sel: 1, dot: 1 })}${r(lock, 'Deuxième période', 'Période')}${slot}${r(lock, 'Fin du match', 'Victoire')}
       ${sec('Clôture')}${r(grip, 'Remise des prix', 'Séquence libre')}${r(grip, 'Remerciements', 'Merci')}
       ${sec("Bandeaux, par-dessus l'écran")}${r('<span style="width:12px"></span>', '15 dernières minutes, dernière impro', 'Bandeau')}
       <div style="margin-top:auto;padding:8px 6px 0;border-top:1px solid var(--hair)"><span class="btn">${ic('restart', 13)}Rétablir le déroulé par défaut</span></div></div>`;
@@ -749,7 +749,7 @@ function renderBoard() {
     } else if (q.per) {
       const items = [q]; i++; while (i < L.length && !ENDS.includes(L[i].id)) items.push(L[i++]);
       const n = items.filter(x => x.hd).length;
-      html += grpH(q.id === 'p1' ? '1re période' : '2e période', items, n ? n + (n > 1 ? ' impros' : ' impro') : 'aucune impro');
+      html += grpH(q.id === 'p1' ? 'Première période' : 'Deuxième période', items, n ? n + (n > 1 ? ' impros' : ' impro') : 'aucune impro');
     } else { html += rowH(q); i++; }
   }
   put('#r-list', html);
@@ -759,7 +759,7 @@ function renderBoard() {
   const c = S.card, n = S.sel === 'c2' ? 2 : 1, cau = !!S.cau, ilab = cau ? 'CAUCUS · Impro 1' : warm() ? 'Échauffement' : c ? (n === 2 ? 'Impro 2' : 'Impro 1' + (c.title ? ' · ' + esc(c.title) : '')) : 'Impro';
   const lancer = (a, run) => `<button type="button" class="b" data-a="${a}" style="width:68px;justify-content:center">${ic(run ? 'pause' : 'play', 12)}${run ? 'Pause' : 'Lancer'}</button>`;
   const reset = `<button type="button" class="b" data-a="x" title="Remettre à zéro" aria-label="Remettre à zéro">${ic('refresh', 12)}</button>`;
-  put('#r-clock', `<div class="z"><div><span class="lab">1re période</span>${S.alert ? `<button type="button" class="b alert" data-a="alert">${ic('bell', 12)}Plus que 15 min</button>` : ''}</div>
+  put('#r-clock', `<div class="z"><div><span class="lab">Première période</span>${S.alert ? `<button type="button" class="b alert" data-a="alert">${ic('bell', 12)}Plus que 15 min</button>` : ''}</div>
       <div><span id="vg-clk"></span>${lancer('clock', S.run)}<span class="pm1"><button type="button" class="b" data-a="x">+1 min</button><button type="button" class="b" data-a="x">−1 min</button></span>${reset}</div></div>
     <i class="sep"></i><div class="z"><span class="lab${cau ? ' cau' : ''}">${ilab}</span><div><span class="ic2${S.improRun || cau ? ' run' : ''}"${cau ? ' style="background:none"' : ''}><span id="vg-ie">${ieText()}</span>${warm() || cau ? '' : ic('nav-arrow-down', 11)}</span>${cau ? `<button type="button" class="b" data-a="x" style="width:76px;justify-content:center">${ic('check-circle', 12)}Terminer</button>` : lancer('iclock', S.improRun)}${reset}</div></div>
     <i class="sep"></i><div class="scz"><div class="nms">${['a', 'b'].map(s => `<span class="nm" style="color:${col(s)}">${esc(S.teams[s].name)}</span>`).join('')}</div>
@@ -921,8 +921,8 @@ const STEPS = [
       "Pendant l'<b>échauffement</b>, le chrono du haut le décompte (5 min, réglable dans le règlement), sans rien montrer au public.",
       "Les hymnes s'activent ou se désactivent dans la fiche.",
       "On avance le déroulé jusqu'au début de la 1re période."],
-    en: () => { S.seqs.slice(0, 6).forEach(q => { q.st = 'done'; }); live('hb'); S.air = { k: 'anthem', c: 'b' }; prep('p1', { k: 'title', t: '1RE PÉRIODE', sub: "C'EST PARTI !" }); } },
-  { ch: 3, t: 'Ouvrir la période', x: ["Projetez la <b>1re période</b>.", "C'est un écran de titre, avec le score."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
+    en: () => { S.seqs.slice(0, 6).forEach(q => { q.st = 'done'; }); live('hb'); S.air = { k: 'anthem', c: 'b' }; prep('p1', { k: 'title', t: 'PREMIÈRE PÉRIODE', sub: "C'EST PARTI !" }); } },
+  { ch: 3, t: 'Ouvrir la période', x: ["Projetez la <b>première période</b>.", "C'est un écran de titre, avec le score."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
     do: () => { live('p1'); S.air = S.prep; addImpro(1, 'p1'); S.card = newCard(); prep('c1', null); }, af: ["La 1re impro est créée d'office : sa carte vous attend.", "Les impros suivantes : « + Ajouter une impro »."] },
   { ch: 3, t: 'Donner le coup d\'envoi : la sirène', x: ["L'écran de la période est à l'antenne : place au jeu.", "Cliquez sur la <b>Sirène</b>, la pastille jaune en haut à gauche de la barre d'outils ; un second clic l'arrête."], tg: '[data-a=siren]', ex: 'siren', keys: '⌥⌘S', foc: '.vg-tools', wait: 2500,
     do: () => {}, af: ["La sirène donne le coup d'envoi de la période.", "Elle sonne sur la sortie son du Mac, au volume du Mac.", "La relancer la reprend au début.", "Elle se déclenche aussi par MIDI."] },
@@ -961,12 +961,12 @@ const STEPS = [
   { ch: 5, t: 'Fin de la période', x: ["La période se termine : il n'y a plus d'impro à jouer.", "Dans la carte vide de l'impro 2, cliquez sur <b>Pas d'autre impro</b>."], tg: '[data-a=skip]', ex: 'skip', foc: '#r-work',
     do: () => { S.seqs = S.seqs.filter(q => !/^[icfvrt]2$/.test(q.id)); S.skip = false; S.notice = ''; prep('ent', { k: 'inter', sc: Object.assign({}, S.score) }); } },
   { ch: 5, t: "Projeter l'entracte", x: ["L'entracte est en préparation, avec le score à la mi-temps.", "Projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
-    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: ["Au retour, la 2e période se déroule comme la 1re : carte, fautes, vote, résultat et score."] },
-  { ch: 5, t: 'La 2e période', info: 1, foc: '#r-prev', x: [
+    do: () => { live('ent'); S.air = S.prep; S.run = false; prep('p2', { k: 'title', t: 'DEUXIÈME PÉRIODE', sub: 'ON REPREND', sc: Object.assign({}, S.score) }); }, af: ["Au retour, la 2e période se déroule comme la 1re : carte, fautes, vote, résultat et score."] },
+  { ch: 5, t: 'La deuxième période', info: 1, foc: '#r-prev', x: [
       "Passons directement à la fin de soirée.",
       "La 2e période est jouée : les Hiboux mènent 5 à 3.",
       "Le déroulé se termine par « Fin du match », puis « Remerciements »."],
-    en: () => { live('p2'); S.air = { k: 'title', t: '2E PÉRIODE', sub: 'ON REPREND', sc: { a: 0, b: 1 } }; S.score = { a: 3, b: 5 }; S.fouls = { a: 0, b: 0 }; S.remain = 95; S.gold = true; prep('fin', { k: 'win', sc: { a: 3, b: 5 }, gold: 'La dernière valise' }); } },
+    en: () => { live('p2'); S.air = { k: 'title', t: 'DEUXIÈME PÉRIODE', sub: 'ON REPREND', sc: { a: 0, b: 1 } }; S.score = { a: 3, b: 5 }; S.fouls = { a: 0, b: 0 }; S.remain = 95; S.gold = true; prep('fin', { k: 'win', sc: { a: 3, b: 5 }, gold: 'La dernière valise' }); } },
   { ch: 6, t: 'Fin du match', x: ["La fin du match est en préparation : vainqueur, score final et <b>Impro d'or</b>.", "Projetez-la."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
     do: () => { live('fin'); S.air = S.prep; prep('mer', { k: 'merci' }); }, af: ["Impro d'or : clic droit sur une impro du déroulé, « Désigner comme Impro d'or » (ici, la 1re).", "Clic droit sur une étape déjà passée : « Revenir à cette étape » pour la <b>reprendre</b>.", "Clic droit sur une séquence à venir : « Modifier dans la fiche… » ou « Retirer du déroulé »."] },
   { ch: 6, t: 'Remerciements', x: ["Dernier écran : « Merci ! », les prochaines dates, les réseaux sociaux et leurs QR codes.", "Titre et message se règlent à l'avance dans l'onglet Déroulé de la fiche, dates et réseaux dans Contenus ; le board vous le rappelle ici.", "Projetez-le."], tg: P, ex: 'project', keys: '⌘↩', foc: '#r-prev',
